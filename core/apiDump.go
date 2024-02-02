@@ -1,34 +1,28 @@
 package core
 
-type artist struct {
+type Artist struct {
 	id           int
 	image        string
 	nom          string
-	member       []string
-	creaDate     string
+	members      []Member
+	creationDate string
 	firstalbum   string
 	locations    string
-	concertdates string
+	concertdates []Concert
 	relations    string
 }
-
-type locations struct {
-	index     []string // se compose des trois variables ci-dessous
-	id        int
-	locations []string
-	dates     string
+type Member struct {
+	surname string
+	name    string
 }
 
-type dates struct {
-	index []string
-	id    int
-	dates []string
+type Concert struct {
+	date     Date
+	location string
 }
 
-type relations struct {
-	index         []string
-	id            int
-	ville         string
-	dates         string
-	dateslocation [][]string
+type Date struct {
+	day   int
+	month int
+	year  int
 }
