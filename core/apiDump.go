@@ -143,10 +143,3 @@ func newFunction(res *http.Response) ([]byte, error) {
 	body, err := ioutil.ReadAll(res.Body)
 	return body, err
 }
-
-func main() {
-	Api_artists()
-	Api_dates()
-	Api_location()
-	Api_Relation()
-}
