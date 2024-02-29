@@ -15,6 +15,16 @@ type APIResponse struct {
 	Relation  []Relation  `json:"relation"`
 }
 
+type APIResponseDates struct {
+	Dates []string `json:"dates"`
+}
+
+type APIResponseLocation struct {
+	ID        int64    `json:"id"`
+	Locations []string `json:"locations"`
+	Dates     string   `json:"dates"`
+}
+
 type Artist struct {
 	Image        string   `json:"image"`
 	Name         string   `json:"name"`
@@ -66,7 +76,7 @@ func Api_artists() {
 }
 
 func Api_dates() {
-	var response4 []Dates
+	var response4 APIResponseDates
 
 	res, err := http.Get("https://groupietrackers.herokuapp.com/api/dates")
 	if err != nil {
@@ -84,12 +94,12 @@ func Api_dates() {
 		log.Fatal(err)
 	}
 
-	for i, p := range response4 {
-		fmt.Printf("test %d: %s\n", i+1, p.Dates)
+	for i, date := range response4.Dates {
+		fmt.Printf("test %d: %s\n", i+1, date)
 	}
 }
 func Api_location() {
-	var response3 []Locations
+	var response3 []APIResponseLocation
 
 	res, err := http.Get("https://groupietrackers.herokuapp.com/api/locations")
 	if err != nil {
@@ -104,14 +114,17 @@ func Api_location() {
 
 	err = json.Unmarshal(body, &response3)
 	if err != nil {
-		log.Fatal(err)
+		var singleResponse APIResponseLocation
+		err = json.Unmarshal(body, &singleResponse)
+		if err != nil {
+			log.Fatal(err)
+		}
+		response3 = append(response3, singleResponse)
 	}
 
-	for i, p := range response3 {
-		fmt.Printf("test %d:%s,%s\n", i+1, p.Locations, p.Dates)
-
+	for i, loc := range response3 {
+		fmt.Printf("test %d: %s, %s\n", i+1, loc.Locations, loc.Dates)
 	}
-
 }
 
 func Api_Relation() {
@@ -130,13 +143,17 @@ func Api_Relation() {
 
 	err = json.Unmarshal(body, &response2)
 	if err != nil {
-		log.Fatal(err)
+		var singleResponse Relation
+		err = json.Unmarshal(body, &singleResponse)
+		if err != nil {
+			log.Fatal(err)
+		}
+		response2 = append(response2, singleResponse)
 	}
 
 	for i, p := range response2 {
 		fmt.Printf("test %d:%v\n", i+1, p.DatesLocations)
 	}
-
 }
 
 func newFunction(res *http.Response) ([]byte, error) {
