@@ -6,49 +6,80 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
 )
 
-type APIResponse struct {
-	Artists   []Artist    `json:"artists"`
-	Locations []Locations `json:"locations"`
-	Dates     []Dates     `json:"dates"`
-	Relation  []Relation  `json:"relation"`
+type Artist struct {
+	Id           int
+	Image        string
+	Nom          string
+	Members      []string
+	CreationDate int64
+	FirstAlbum   string
+	Concerts     []Concert
+	Relations    string
+}
+type Member struct {
+	Surname string `json:"surname"`
+	Name    string `json:"name"`
+}
+
+type Concert struct {
+	Date     Date                `json:"dates"`
+	Location APIResponseLocation `json:"locations"`
+}
+
+type APIResponseLocation struct {
+	Locations []string `json:"locations"`
+}
+
+type Date struct {
+	Day   int `json:"day"`
+	Month int `json:"month"`
+	Year  int `json:"year"`
+}
+
+type API struct {
 }
 
 type APIResponseDates struct {
 	Dates []string `json:"dates"`
 }
 
-type APIResponseLocation struct {
-	ID        int64    `json:"id"`
-	Locations []string `json:"locations"`
-	Dates     string   `json:"dates"`
-}
+func (d *Date) UnmarshalJSON(data []byte) error {
+	var dateStr string
+	if err := json.Unmarshal(data, &dateStr); err != nil {
+		return err
+	}
 
-type Artist struct {
-	Image        string   `json:"image"`
-	Name         string   `json:"name"`
-	Members      []string `json:"members"`
-	CreationDate int64    `json:"creationDate"`
-	FirstAlbum   string   `json:"firstAlbum"`
-	Locations    string   `json:"locations"`
-	ConcertDates string   `json:"concertDates"`
-	Relations    string   `json:"relations"`
-}
+	hasAsterisk := strings.HasPrefix(dateStr, "*")
 
-type Locations struct {
-	ID        int64    `json:"id"`
-	Locations []string `json:"locations"`
-	Dates     string   `json:"dates"`
-}
+	if hasAsterisk {
+		dateStr = dateStr[1:]
+	}
 
-type Dates struct {
-	Dates []string `json:"dates"`
-}
+	dateComponents := strings.Split(dateStr, "-")
 
-type Relation struct {
-	ID             int64       `json:"id"`
-	DatesLocations []Locations `json:"datesLocations"`
+	if len(dateComponents) == 3 {
+		var err error
+		d.Day, err = strconv.Atoi(dateComponents[0])
+		if err != nil {
+			return err
+		}
+
+		d.Month, err = strconv.Atoi(dateComponents[1])
+		if err != nil {
+			return err
+		}
+
+		d.Year, err = strconv.Atoi(dateComponents[2])
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func Api_artists() {
@@ -71,7 +102,17 @@ func Api_artists() {
 	}
 
 	for i, p := range response {
-		fmt.Printf("test %d: %s, %s, %d, %s, %s, %s\n", i+1, p.Name, p.Members, p.CreationDate, p.FirstAlbum, p.ConcertDates, p.Image)
+		fmt.Printf("test %d: %s, %v, %d, %s, %v, %v\n", i+1, p.Nom, p.Members, p.CreationDate, p.FirstAlbum, p.Concerts, p.Image)
+
+		if len(p.Concerts) == 0 {
+			fmt.Println("No concerts available")
+		} else {
+			for j, concert := range p.Concerts {
+				fmt.Printf("  Concert %d: Date - %d-%d-%d, Location - %v\n", j+1, concert.Date.Day, concert.Date.Month, concert.Date.Year, concert.Location.Locations)
+			}
+		}
+
+		fmt.Printf("%v\n", p.Image)
 	}
 }
 
@@ -93,13 +134,30 @@ func Api_dates() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	var rawResponse map[string][]struct {
+		Id    int      `json:"id"`
+		Dates []string `json:"dates"`
+	}
 
-	for i, date := range response4.Dates {
-		fmt.Printf("test %d: %s\n", i+1, date)
+	err = json.Unmarshal(body, &rawResponse)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for i, item := range rawResponse["index"] {
+		for _, dateStr := range item.Dates {
+			var date Date
+			err := json.Unmarshal([]byte("\""+dateStr+"\""), &date)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Printf("test %d: ID: %d, Day: %d, Month: %d, Year: %d\n", i+1, item.Id, date.Day, date.Month, date.Year)
+		}
 	}
 }
+
 func Api_location() {
-	var response3 []APIResponseLocation
+	var response2 APIResponseLocation
 
 	res, err := http.Get("https://groupietrackers.herokuapp.com/api/locations")
 	if err != nil {
@@ -112,47 +170,13 @@ func Api_location() {
 		log.Fatal(err)
 	}
 
-	err = json.Unmarshal(body, &response3)
-	if err != nil {
-		var singleResponse APIResponseLocation
-		err = json.Unmarshal(body, &singleResponse)
-		if err != nil {
-			log.Fatal(err)
-		}
-		response3 = append(response3, singleResponse)
-	}
-
-	for i, loc := range response3 {
-		fmt.Printf("test %d: %s, %s\n", i+1, loc.Locations, loc.Dates)
-	}
-}
-
-func Api_Relation() {
-	var response2 []Relation
-
-	res, err := http.Get("https://groupietrackers.herokuapp.com/api/relation")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer res.Body.Close()
-
-	body, err := newFunction(res)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	err = json.Unmarshal(body, &response2)
 	if err != nil {
-		var singleResponse Relation
-		err = json.Unmarshal(body, &singleResponse)
-		if err != nil {
-			log.Fatal(err)
-		}
-		response2 = append(response2, singleResponse)
+		log.Fatal(err)
 	}
 
-	for i, p := range response2 {
-		fmt.Printf("test %d:%v\n", i+1, p.DatesLocations)
+	for i, location := range response2.Locations {
+		fmt.Printf("test %d: %s\n", i+1, location)
 	}
 }
 
