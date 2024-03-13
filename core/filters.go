@@ -7,10 +7,10 @@ import (
 
 // Filtrer par date de création
 func FilterByCreationDate(artists []Artist, year int) []Artist {
+	yearIn := int64(year)
 	var filteredArtists []Artist
 	for _, artist := range artists {
-		creationYear, _ := strconv.Atoi(strings.Split(artist.CreationDate, "/")[2])
-		if creationYear == year {
+		if artist.CreationDate == yearIn {
 			filteredArtists = append(filteredArtists, artist)
 		}
 	}
@@ -20,8 +20,10 @@ func FilterByCreationDate(artists []Artist, year int) []Artist {
 // Filtrer par date du premier album
 func FilterByFirstAlbumDate(artists []Artist, year int) []Artist {
 	var filteredArtists []Artist
+
 	for _, artist := range artists {
-		if artist.FirstAlbum.Year == year {
+		intYear, _ := strconv.Atoi(strings.Split(artist.FirstAlbum, "-")[2])
+		if intYear == year {
 			filteredArtists = append(filteredArtists, artist)
 		}
 	}
@@ -44,7 +46,7 @@ func FilterByConcertLocation(artists []Artist, location string) []Artist {
 	var filteredArtists []Artist
 	for _, artist := range artists {
 		for _, concert := range artist.Concerts {
-			if concert.Location == location {
+			if concert.Location.Locations[0] == location {
 				filteredArtists = append(filteredArtists, artist)
 				break // Une fois qu'un concert correspondant est trouvé, passer à l'artiste suivant
 			}

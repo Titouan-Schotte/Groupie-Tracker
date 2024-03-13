@@ -14,16 +14,16 @@ type PotentialSearch struct {
 func SearchInAllStruct(inp string, artists []Artist) []Artist {
 	potentials := []PotentialSearch{}
 	for _, artist := range artists {
-		artistQuery := []string{artist.Image, artist.Nom, artist.CreationDate}
+		convCreationDate := strconv.Itoa(int(artist.CreationDate))
+		artistQuery := []string{artist.Image, artist.Nom, convCreationDate}
 		for _, member := range artist.Members {
-			artistQuery = append(artistQuery, member.Name)
-			artistQuery = append(artistQuery, member.Surname)
+			artistQuery = append(artistQuery, member)
 		}
 		for _, concert := range artist.Concerts {
 			artistQuery = append(artistQuery, strconv.Itoa(concert.Date.Day))
 			artistQuery = append(artistQuery, strconv.Itoa(concert.Date.Month))
 			artistQuery = append(artistQuery, strconv.Itoa(concert.Date.Year))
-			artistQuery = append(artistQuery, concert.Location)
+			artistQuery = append(artistQuery, concert.Location.Locations[0])
 		}
 
 		// Calcul du potentiel
@@ -78,12 +78,13 @@ func containsAll(artist Artist, query []string) bool {
 }
 
 func artistData(artist Artist) []string {
-	data := []string{artist.Image, artist.Nom, artist.CreationDate}
+	convCreationDate := strconv.Itoa(int(artist.CreationDate))
+	data := []string{artist.Image, artist.Nom, convCreationDate}
 	for _, member := range artist.Members {
-		data = append(data, member.Name, member.Surname)
+		data = append(data, member)
 	}
 	for _, concert := range artist.Concerts {
-		data = append(data, strconv.Itoa(concert.Date.Day), strconv.Itoa(concert.Date.Month), strconv.Itoa(concert.Date.Year), concert.Location)
+		data = append(data, strconv.Itoa(concert.Date.Day), strconv.Itoa(concert.Date.Month), strconv.Itoa(concert.Date.Year), concert.Location.Locations[0])
 	}
 	return data
 }

@@ -24,68 +24,7 @@ var (
 	numMembersEntry       *widget.Entry
 	concertLocationSelect *widget.Select
 	ConcertLocations      = []string{"Location 1", "Location 2"}
-	artistsRef            = []core.Artist{
-		{
-			Id:           1,
-			Image:        "https://groupietrackers.herokuapp.com/api/images/acdc.jpeg",
-			Nom:          "Artiste 1",
-			Members:      []core.Member{{Surname: "Doe", Name: "John"}},
-			CreationDate: "01/01/2020",
-			FirstAlbum:   core.Date{Day: 1, Month: 1, Year: 2021},
-			Concerts:     []core.Concert{{Date: core.Date{Day: 15, Month: 2, Year: 2022}, Location: "Location 1"}},
-			Relations:    "Relations 1",
-		},
-		{
-			Id:           2,
-			Image:        "https://groupietrackers.herokuapp.com/api/images/acdc.jpeg",
-			Nom:          "Artiste 2",
-			Members:      []core.Member{{Surname: "Smith", Name: "Jane"}},
-			CreationDate: "02/02/2019",
-			FirstAlbum:   core.Date{Day: 2, Month: 2, Year: 2020},
-			Concerts:     []core.Concert{{Date: core.Date{Day: 31, Month: 3, Year: 2024}, Location: "Location 2"}},
-			Relations:    "Relations 2",
-		},
-		{
-			Id:           3,
-			Image:        "https://groupietrackers.herokuapp.com/api/images/acdc.jpeg",
-			Nom:          "Artiste 3",
-			Members:      []core.Member{{Surname: "Doe", Name: "Jane"}},
-			CreationDate: "03/03/2021",
-			FirstAlbum:   core.Date{Day: 3, Month: 3, Year: 2022},
-			Concerts:     []core.Concert{{Date: core.Date{Day: 10, Month: 4, Year: 2023}, Location: "Location 3"}},
-			Relations:    "Relations 3",
-		},
-		{
-			Id:           4,
-			Image:        "https://groupietrackers.herokuapp.com/api/images/acdc.jpeg",
-			Nom:          "Artiste 4",
-			Members:      []core.Member{{Surname: "Doe", Name: "John"}},
-			CreationDate: "01/01/2020",
-			FirstAlbum:   core.Date{Day: 1, Month: 1, Year: 2021},
-			Concerts:     []core.Concert{{Date: core.Date{Day: 15, Month: 2, Year: 2022}, Location: "Location 1"}},
-			Relations:    "Relations 1",
-		},
-		{
-			Id:           5,
-			Image:        "https://groupietrackers.herokuapp.com/api/images/acdc.jpeg",
-			Nom:          "Artiste 5",
-			Members:      []core.Member{{Surname: "Smith", Name: "Jane"}},
-			CreationDate: "02/02/2019",
-			FirstAlbum:   core.Date{Day: 2, Month: 2, Year: 2020},
-			Concerts:     []core.Concert{{Date: core.Date{Day: 31, Month: 3, Year: 2024}, Location: "Location 2"}},
-			Relations:    "Relations 2",
-		},
-		{
-			Id:           6,
-			Image:        "https://groupietrackers.herokuapp.com/api/images/acdc.jpeg",
-			Nom:          "Artiste 6",
-			Members:      []core.Member{{Surname: "Ko", Name: "Jane"}},
-			CreationDate: "03/03/2021",
-			FirstAlbum:   core.Date{Day: 3, Month: 3, Year: 2022},
-			Concerts:     []core.Concert{{Date: core.Date{Day: 10, Month: 4, Year: 2023}, Location: "Location 3"}},
-			Relations:    "Relations 3",
-		},
-	}
+	artistsRef            = core.Api_artists()
 )
 
 func main() {

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -47,12 +46,9 @@ type APIResponseDates struct {
 	Dates []string `json:"dates"`
 }
 
-func (d *Date) UnmarshalJSON(data []byte) error {
+func (d *Date) UnmarshalJSON(data []byte) {
 	var dateStr string
-	if err := json.Unmarshal(data, &dateStr); err != nil {
-		return err
-	}
-
+	json.Unmarshal(data, &dateStr)
 	hasAsterisk := strings.HasPrefix(dateStr, "*")
 
 	if hasAsterisk {
@@ -62,44 +58,24 @@ func (d *Date) UnmarshalJSON(data []byte) error {
 	dateComponents := strings.Split(dateStr, "-")
 
 	if len(dateComponents) == 3 {
-		var err error
-		d.Day, err = strconv.Atoi(dateComponents[0])
-		if err != nil {
-			return err
-		}
-
-		d.Month, err = strconv.Atoi(dateComponents[1])
-		if err != nil {
-			return err
-		}
-
-		d.Year, err = strconv.Atoi(dateComponents[2])
-		if err != nil {
-			return err
-		}
+		d.Day, _ = strconv.Atoi(dateComponents[0])
+		d.Month, _ = strconv.Atoi(dateComponents[1])
+		d.Year, _ = strconv.Atoi(dateComponents[2])
 	}
 
-	return nil
+	return
 }
 
-func Api_artists() {
+func Api_artists() []Artist {
 	var response []Artist
 
-	res, err := http.Get("https://groupietrackers.herokuapp.com/api/artists")
-	if err != nil {
-		log.Fatal(err)
-	}
+	res, _ := http.Get("https://groupietrackers.herokuapp.com/api/artists")
+
 	defer res.Body.Close()
 
-	body, err := newFunction(res)
-	if err != nil {
-		log.Fatal(err)
-	}
+	body := newFunction(res)
 
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		log.Fatal(err)
-	}
+	json.Unmarshal(body, &response)
 
 	for i, p := range response {
 		fmt.Printf("test %d: %s, %v, %d, %s, %v, %v\n", i+1, p.Nom, p.Members, p.CreationDate, p.FirstAlbum, p.Concerts, p.Image)
@@ -114,43 +90,29 @@ func Api_artists() {
 
 		fmt.Printf("%v\n", p.Image)
 	}
+	return response
 }
 
 func Api_dates() {
 	var response4 APIResponseDates
 
-	res, err := http.Get("https://groupietrackers.herokuapp.com/api/dates")
-	if err != nil {
-		log.Fatal(err)
-	}
+	res, _ := http.Get("https://groupietrackers.herokuapp.com/api/dates")
 	defer res.Body.Close()
 
-	body, err := newFunction(res)
-	if err != nil {
-		log.Fatal(err)
-	}
+	body := newFunction(res)
 
-	err = json.Unmarshal(body, &response4)
-	if err != nil {
-		log.Fatal(err)
-	}
+	json.Unmarshal(body, &response4)
 	var rawResponse map[string][]struct {
 		Id    int      `json:"id"`
 		Dates []string `json:"dates"`
 	}
 
-	err = json.Unmarshal(body, &rawResponse)
-	if err != nil {
-		log.Fatal(err)
-	}
+	json.Unmarshal(body, &rawResponse)
 
 	for i, item := range rawResponse["index"] {
 		for _, dateStr := range item.Dates {
 			var date Date
-			err := json.Unmarshal([]byte("\""+dateStr+"\""), &date)
-			if err != nil {
-				log.Fatal(err)
-			}
+			json.Unmarshal([]byte("\""+dateStr+"\""), &date)
 			fmt.Printf("test %d: ID: %d, Day: %d, Month: %d, Year: %d\n", i+1, item.Id, date.Day, date.Month, date.Year)
 		}
 	}
@@ -159,28 +121,20 @@ func Api_dates() {
 func Api_location() {
 	var response2 APIResponseLocation
 
-	res, err := http.Get("https://groupietrackers.herokuapp.com/api/locations")
-	if err != nil {
-		log.Fatal(err)
-	}
+	res, _ := http.Get("https://groupietrackers.herokuapp.com/api/locations")
+
 	defer res.Body.Close()
 
-	body, err := newFunction(res)
-	if err != nil {
-		log.Fatal(err)
-	}
+	body := newFunction(res)
 
-	err = json.Unmarshal(body, &response2)
-	if err != nil {
-		log.Fatal(err)
-	}
+	json.Unmarshal(body, &response2)
 
 	for i, location := range response2.Locations {
 		fmt.Printf("test %d: %s\n", i+1, location)
 	}
 }
 
-func newFunction(res *http.Response) ([]byte, error) {
-	body, err := ioutil.ReadAll(res.Body)
-	return body, err
+func newFunction(res *http.Response) []byte {
+	body, _ := ioutil.ReadAll(res.Body)
+	return body
 }
