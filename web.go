@@ -2,6 +2,7 @@ package main
 
 import (
 	"Groupie_Tracker/core"
+	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
@@ -114,35 +115,28 @@ func updateGrid() {
 
 func showArtistsGrid(artists []core.Artist) {
 	grid.Objects = nil
-
 	for _, artist := range artists {
 		image := loadImageFromURL(artist.Image)
-
 		// Limit the maximum size of the image to 500x500
 		if image.Size().Width > 500 || image.Size().Height > 500 {
 			image.Resize(fyne.NewSize(500, 500))
 		}
-
-		label := widget.NewLabel(artist.Nom)
-
 		// Create a container for the image
 		imageContainer := container.New(layout.NewMaxLayout(), image)
+		fmt.Println(artist.Image)
 
-		// Create a container for the label and center it at the bottom of the image
-		labelContainer := container.New(layout.NewHBoxLayout(),
-			layout.NewSpacer(),
-			label,
-			layout.NewSpacer(),
-		)
+		// Ajouter le bouton avec le nom de l'artiste en dessous de l'image
+		button := widget.NewButton(artist.Nom, func(a core.Artist) func() {
+			return func() {
+				showArtistDetails(a)
+			}
+		}(artist))
 
-		// Adjust the size of the label container to match the image size
-		labelContainer.Resize(fyne.NewSize(image.Size().Width, label.MinSize().Height))
+		// Créer un conteneur pour organiser l'image et le bouton
+		imageWithButton := container.New(layout.NewVBoxLayout(), imageContainer, button)
 
-		// Combine the image container and label container vertically
-		card := container.New(layout.NewVBoxLayout(), imageContainer, labelContainer)
-
-		// Add the card to the grid
-		grid.Add(card)
+		// Ajouter le conteneur à la grille
+		grid.Add(imageWithButton)
 	}
 
 	grid.Refresh()
@@ -199,4 +193,15 @@ func applyFilters() {
 
 	// Mettre à jour la grille avec les artistes filtrés
 	showArtistsGrid(filteredArtists)
+}
+
+// Fonction pour afficher les détails de l'artiste
+func showArtistDetails(artist core.Artist) {
+	fmt.Println("ID =>", artist.Id)
+	fmt.Println("Nom =>", artist.Nom)
+	fmt.Println("Image =>", artist.Image)
+	fmt.Println("First Album =>", artist.FirstAlbum)
+	fmt.Println("Concerts liste =>", artist.Concerts)
+	fmt.Println("Creation Album =>", artist.CreationDate)
+	fmt.Println("Relations =>", artist.Relations)
 }
