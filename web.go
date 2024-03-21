@@ -36,43 +36,26 @@ func main() {
 	searchEntry := widget.NewEntry()
 	searchEntry.SetPlaceHolder("Rechercher un artiste")
 
-	// Calculer la largeur minimale nécessaire pour la searchEntry
-	placeholderWidth := float32(800)
-
-	// Définir la largeur minimale de la searchEntry
-	searchEntry.Resize(fyne.NewSize(placeholderWidth+100, searchEntry.MinSize().Height)) // Ajouter 100 pixels à la largeur
-
-	// Créer un bouton de recherche
 	searchButton := widget.NewButton("Rechercher", func() {
 		searchTerm = searchEntry.Text
 		artists = core.SearchInAllStruct(searchTerm, artistsRef)
 		updateGrid()
 	})
 
-	// Créer des champs d'entrée pour les filtres de date de création et de premier album
 	creationDateFromEntry = widget.NewEntry()
 	creationDateFromEntry.SetPlaceHolder("Année de début")
-
 	creationDateToEntry = widget.NewEntry()
 	creationDateToEntry.SetPlaceHolder("Année de fin")
-
 	firstAlbumFromEntry = widget.NewEntry()
 	firstAlbumFromEntry.SetPlaceHolder("Année de début")
-
 	firstAlbumToEntry = widget.NewEntry()
 	firstAlbumToEntry.SetPlaceHolder("Année de fin")
-
-	// Créer un champ d'entrée pour le filtre par nombre de membres
 	numMembersEntry = widget.NewEntry()
 	numMembersEntry.SetPlaceHolder("Nombre de membres")
-
-	// Créer une liste déroulante pour le filtre par lieu de concert
 	concertLocationSelect = widget.NewSelect(ConcertLocations, nil)
 
-	// Créer un bouton pour appliquer les filtres
 	applyFiltersButton := widget.NewButton("Appliquer les filtres", applyFilters)
 
-	// Créer un conteneur pour organiser les champs de filtrage
 	filterFields := container.NewVBox(
 		widget.NewLabel("Filtre par date de création :"),
 		container.NewHBox(widget.NewLabel("De "), creationDateFromEntry, widget.NewLabel(" à "), creationDateToEntry),
@@ -85,25 +68,29 @@ func main() {
 		applyFiltersButton,
 	)
 
-	// Créer une disposition personnalisée pour la searchBox avec la searchEntry agrandie et le bouton de recherche
-	searchBox := fyne.NewContainerWithLayout(layout.NewHBoxLayout(),
+	searchBox := container.NewHBox(
 		widget.NewLabel("Search: "),
-		container.New(layout.NewMaxLayout(), searchEntry), // Utilisez un conteneur pour permettre à la searchEntry de s'étendre
+		searchEntry, // Occupera automatiquement tout l'espace horizontal disponible
 		searchButton,
 	)
 
-	// Redimensionner la searchBox
-	searchBox.Resize(fyne.NewSize(placeholderWidth+100, searchBox.MinSize().Height))
+	topContainer := container.NewVBox(
+		searchBox,
+		filterFields,
+	)
+
 	grid = container.NewGridWithColumns(5)
-	//scrollContainer := container.NewVScroll(grid)
-
 	updateGrid()
+	gridWithScroll := container.NewVScroll(grid)
 
-	content := container.NewBorder(searchBox, nil, nil, nil, grid)
-	myWindow.SetContent(container.NewVBox(filterFields, content))
+	mainContainer := container.NewBorder(topContainer, nil, nil, nil, gridWithScroll)
+
+	myWindow.SetContent(mainContainer)
 	myWindow.Resize(fyne.NewSize(800, 600))
 	myWindow.ShowAndRun()
 }
+
+// Les autres fonctions telles que updateGrid(), showArtistsGrid(), loadImageFromURL(), applyFilters(), et showArtistDetails() restent inchangées.
 
 func updateGrid() {
 	filteredArtists := artists // Appliquez votre logique de filtrage ici
@@ -126,11 +113,10 @@ func showArtistsGrid(artists []core.Artist) {
 		fmt.Println(artist.Image)
 
 		// Ajouter le bouton avec le nom de l'artiste en dessous de l'image
-		button := widget.NewButton(artist.Nom, func(a core.Artist) func() {
-			return func() {
-				showArtistDetails(a)
-			}
-		}(artist))
+		button := widget.NewButton(artist.Nom, func() {
+			fmt.Println(artist.Image)
+			showArtistDetails(artist)
+		})
 
 		// Créer un conteneur pour organiser l'image et le bouton
 		imageWithButton := container.New(layout.NewVBoxLayout(), imageContainer, button)
