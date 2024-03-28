@@ -41,3 +41,20 @@ package core
 //
 //	return geoResp.Latitude, geoResp.Longitude
 //}
+
+import (
+	"fmt"
+)
+
+func main() {
+	// Clé d'API Bing Maps
+	apiKey := "98dHC1zw62rCO5MgbyLo~-RXs8b5NOfEDf1Ed_fpG5w~ApA31rcfZ3Il_YTnP5E7_VKZQYxqvk8eO5R2e5hzfQuR9jXpwfU_X5Y0wSv-K-iD"
+
+	// Paramètres de la requête
+	Latitude := 51.5074
+	Longitude := -0.1278
+
+	const bingMapsStaticURL = "https://dev.virtualearth.net/REST/v1/Imagery/Map/Road"
+	fmt.Printf("%s/%.6f,%.6f/16?mapSize=800,500&pp=%.6f,%.6f;66&mapLayer=Basemap,Buildings&key=%s",
+		bingMapsStaticURL, Latitude, Longitude, Latitude, Longitude, apiKey)
+}
