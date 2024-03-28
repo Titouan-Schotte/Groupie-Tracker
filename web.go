@@ -8,7 +8,9 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+	"net/url"
 	"strconv"
+	"strings"
 )
 
 var (
@@ -30,7 +32,7 @@ var (
 	is_numMembersSelect       = false
 	is_concertLocationSelect  = false
 	ConcertLocations          = []string{"Location 1", "Location 2"}
-	artistsRef                = core.Api_artists()
+	artistsRef                []core.Artist
 	filtersVisible            bool // Nouveau : état de visibilité des filtres
 	filterContainer           *fyne.Container
 )
@@ -244,6 +246,7 @@ func getNumberFromSelect(selectWidget *widget.Select, isSelected bool) int {
 
 // Fonction pour afficher les détails de l'artiste
 func showArtistDetails(artist core.Artist) {
+
 	nameLabel := widget.NewLabelWithStyle(artist.Nom, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	nameLabel.TextStyle = fyne.TextStyle{Bold: true}
 
@@ -261,20 +264,45 @@ func showArtistDetails(artist core.Artist) {
 		detailsContainer.Add(widget.NewLabel(" - " + member))
 	}
 
-	// Mise en page avec l'image et les détails textuels
-	content := container.NewHBox(detailsContainer, image)
-
 	concertsLabel := container.NewVBox(widget.NewLabel("Concerts :"))
 	for _, concert := range artist.ConcertDates {
-		concertsLabel.Add(widget.NewLabel(fmt.Sprintf("- à %s le %d-%d-%d", concert.Location.Locations[0], concert.Date.Day, concert.Date.Month, concert.Date.Year)))
+		concertsLabel.Add(widget.NewButton(fmt.Sprintf("- à %s, %s le %d-%d-%d", strings.Split(concert.Location, "-")[0], concert.Date.Day, concert.Date.Month, concert.Date.Year), func() {
+			showMapPopup(concert.Location)
+		}))
 	}
-	content.Add(concertsLabel)
-	// Ajoutez le nom en haut
-	contentWithHeader := container.NewVBox(nameLabel, content)
+
+	// Mise en page avec l'image et les détails textuels
+	content := container.NewHBox(detailsContainer, image, concertsLabel)
+
+	// Bouton pour ouvrir la page Spotify de l'artiste
+	spotifyButton := widget.NewButton("Écouter sur Spotify", func() {
+		searchQuery := strings.ReplaceAll(artist.Nom, " ", "%20")
+		urlStr := "https://open.spotify.com/search/" + searchQuery
+
+		// Construire l'URL en utilisant net/url
+		parsedUrl, _ := url.Parse(urlStr)
+
+		// Utiliser fyne pour ouvrir l'URL
+		fyne.CurrentApp().OpenURL(parsedUrl)
+	})
+
+	// Ajoutez le nom en haut et le bouton Spotify en bas
+	contentWithHeader := container.NewVBox(nameLabel, content, spotifyButton)
 
 	// Créez et affichez la popup
 	popUp := widget.NewPopUp(contentWithHeader, myWindow.Canvas())
 	popUp.Show()
 	popUp.Resize(fyne.NewSize(600, 400))
-	popUp.Move(fyne.NewPos(myWindow.Canvas().Size().Width/2-300, myWindow.Canvas().Size().Height/2-100))
+	popUp.Move(fyne.NewPos(myWindow.Canvas().Size().Width/2-300, myWindow.Canvas().Size().Height/2-200))
+}
+
+func showMapPopup(location string) {
+	backgroundImage := loadImageFromURL("https://t3.ftcdn.net/jpg/02/23/60/54/360_F_223605406_nGKtPp42ZRx4ZxvrcVeT3Ek6V5Uw4ETh.jpg")
+	backgroundImage.FillMode = canvas.ImageFillStretch // Ajuster pour remplir l'espace
+	content := container.NewMax(backgroundImage)
+
+	popUp := widget.NewPopUp(content, myWindow.Canvas())
+	popUp.Show()
+	popUp.Resize(fyne.NewSize(1200, 800))
+	popUp.Move(fyne.NewPos(myWindow.Canvas().Size().Width/2-600, myWindow.Canvas().Size().Height/2-400))
 }

@@ -24,7 +24,7 @@ func SearchInAllStruct(inp string, artists []Artist) []Artist {
 			artistQuery = append(artistQuery, strconv.Itoa(concert.Date.Day))
 			artistQuery = append(artistQuery, strconv.Itoa(concert.Date.Month))
 			artistQuery = append(artistQuery, strconv.Itoa(concert.Date.Year))
-			artistQuery = append(artistQuery, strings.ToLower(concert.Location.Locations[0]))
+			artistQuery = append(artistQuery, strings.ToLower(concert.Location))
 		}
 
 		// Calcul du potentiel
@@ -85,7 +85,7 @@ func artistData(artist Artist) []string {
 		data = append(data, strings.ToLower(member))
 	}
 	for _, concert := range artist.ConcertDates {
-		data = append(data, strconv.Itoa(concert.Date.Day), strconv.Itoa(concert.Date.Month), strconv.Itoa(concert.Date.Year), strings.ToLower(concert.Location.Locations[0]))
+		data = append(data, strconv.Itoa(concert.Date.Day), strconv.Itoa(concert.Date.Month), strconv.Itoa(concert.Date.Year), strings.ToLower(concert.Location))
 	}
 	return data
 }
