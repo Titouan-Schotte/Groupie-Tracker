@@ -3,13 +3,14 @@ package main
 import (
 	"Groupie_Tracker/core"
 	"fmt"
+	"strconv"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
-	"strconv"
 )
 
 var (
@@ -36,7 +37,7 @@ var (
 	filterContainer           *fyne.Container
 )
 
-func main() {
+func home() {
 	myApp = app.New()
 	myWindow = myApp.NewWindow("Groupie Tracker")
 	artists = artistsRef

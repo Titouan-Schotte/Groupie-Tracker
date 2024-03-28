@@ -1,5 +1,12 @@
 package main
 
+import (
+	"Groupie_Tracker/core"
+
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/canvas"
+)
+
 //func main() {
 //	artists := []core.Artist{
 //		{
@@ -50,3 +57,21 @@ package main
 //		fmt.Println(artist.Nom)
 //	}
 //}
+
+func main() {
+	// Créer une nouvelle application
+	app := app.New()
+
+	// Créer une nouvelle fenêtre
+	window := app.NewWindow("My Fyne App")
+
+	// Créer une image à partir de la ressource générée (on ne peut par image que par ressource)
+	source, _ := core.GenerateMapImage("Paris")
+	image := canvas.NewImageFromResource(source)
+	image.FillMode = canvas.ImageFillContain
+	window.SetContent(image)
+
+	// Afficher et exécuter la fenêtre
+	window.ShowAndRun()
+
+}
