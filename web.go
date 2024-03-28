@@ -13,89 +13,173 @@ import (
 )
 
 var (
-	myApp                 fyne.App
-	myWindow              fyne.Window
-	artists               []core.Artist
-	grid                  *fyne.Container
-	searchTerm            string
-	creationDateFromEntry *widget.Entry
-	creationDateToEntry   *widget.Entry
-	firstAlbumFromEntry   *widget.Entry
-	firstAlbumToEntry     *widget.Entry
-	numMembersEntry       *widget.Entry
-	concertLocationSelect *widget.Select
-	ConcertLocations      = []string{"Location 1", "Location 2"}
-	artistsRef            = core.Api_artists()
+	myApp                     fyne.App
+	myWindow                  fyne.Window
+	artists                   []core.Artist
+	grid                      *fyne.Container
+	searchTerm                string
+	creationDateFromSelect    *widget.Select
+	creationDateToSelect      *widget.Select
+	firstAlbumFromSelect      *widget.Select
+	firstAlbumToSelect        *widget.Select
+	numMembersSelect          *widget.Select
+	concertLocationSelect     *widget.Select
+	is_creationDateFromSelect = false
+	is_creationDateToSelect   = false
+	is_firstAlbumFromSelect   = false
+	is_firstAlbumToSelect     = false
+	is_numMembersSelect       = false
+	is_concertLocationSelect  = false
+	ConcertLocations          = []string{"Location 1", "Location 2"}
+	artistsRef                = core.Api_artists()
+	filtersVisible            bool // Nouveau : état de visibilité des filtres
+	filterContainer           *fyne.Container
 )
 
 func main() {
 	myApp = app.New()
 	myWindow = myApp.NewWindow("Groupie Tracker")
-
 	artists = artistsRef
-	searchEntry := widget.NewEntry()
-	searchEntry.SetPlaceHolder("Rechercher un artiste")
 
-	searchButton := widget.NewButton("Rechercher", func() {
-		searchTerm = searchEntry.Text
-		artists = core.SearchInAllStruct(searchTerm, artistsRef)
-		updateGrid()
+	// Configuration de la barre de recherche
+	searchEntry, searchButton := setupSearchComponents()
+
+	// Configuration initiale des filtres (masqués par défaut)
+	setupFilterComponents()
+
+	// Bouton pour afficher/masquer les filtres
+	toggleFiltersButton := widget.NewButton("Afficher les filtres", func() {
+		toggleFiltersVisibility()
 	})
 
-	creationDateFromEntry = widget.NewEntry()
-	creationDateFromEntry.SetPlaceHolder("Année de début")
-	creationDateToEntry = widget.NewEntry()
-	creationDateToEntry.SetPlaceHolder("Année de fin")
-	firstAlbumFromEntry = widget.NewEntry()
-	firstAlbumFromEntry.SetPlaceHolder("Année de début")
-	firstAlbumToEntry = widget.NewEntry()
-	firstAlbumToEntry.SetPlaceHolder("Année de fin")
-	numMembersEntry = widget.NewEntry()
-	numMembersEntry.SetPlaceHolder("Nombre de membres")
-	concertLocationSelect = widget.NewSelect(ConcertLocations, nil)
+	// Configuration de la grille d'artistes
+	setupGrid()
 
-	applyFiltersButton := widget.NewButton("Appliquer les filtres", applyFilters)
-
-	filterFields := container.NewVBox(
-		widget.NewLabel("Filtre par date de création :"),
-		container.NewHBox(widget.NewLabel("De "), creationDateFromEntry, widget.NewLabel(" à "), creationDateToEntry),
-		widget.NewLabel("Filtre par date du premier album :"),
-		container.NewHBox(widget.NewLabel("De "), firstAlbumFromEntry, widget.NewLabel(" à "), firstAlbumToEntry),
-		widget.NewLabel("Filtre par nombre de membres :"),
-		numMembersEntry,
-		widget.NewLabel("Filtre par lieu de concert :"),
-		concertLocationSelect,
-		applyFiltersButton,
-	)
-
-	searchBox := container.NewHBox(
-		widget.NewLabel("Search: "),
-		searchEntry, // Occupera automatiquement tout l'espace horizontal disponible
-		searchButton,
-	)
-
-	topContainer := container.NewVBox(
-		searchBox,
-		filterFields,
-	)
-
-	grid = container.NewGridWithColumns(5)
-	updateGrid()
-	gridWithScroll := container.NewVScroll(grid)
-
-	mainContainer := container.NewBorder(topContainer, nil, nil, nil, gridWithScroll)
+	// Agencement principal
+	topContainer := container.NewVBox(searchEntry, searchButton, toggleFiltersButton, filterContainer)
+	mainContainer := container.NewBorder(topContainer, nil, nil, nil, setupGridContainer())
 
 	myWindow.SetContent(mainContainer)
 	myWindow.Resize(fyne.NewSize(800, 600))
 	myWindow.ShowAndRun()
 }
 
-// Les autres fonctions telles que updateGrid(), showArtistsGrid(), loadImageFromURL(), applyFilters(), et showArtistDetails() restent inchangées.
+func setupSearchComponents() (*widget.Entry, *widget.Button) {
+	searchEntry := widget.NewEntry()
+	searchEntry.SetPlaceHolder("Rechercher un artiste")
+
+	searchButton := widget.NewButton("Rechercher", func() {
+		searchTerm = searchEntry.Text
+		updateGrid()
+	})
+
+	return searchEntry, searchButton
+}
+
+func setupFilterComponents() {
+	// Générer les options d'années pour les menus déroulants
+	yearOptions := generateYearOptions(1900, 2024)
+	// Créer les sélecteurs d'années avec les options générées
+	creationDateFromSelect = widget.NewSelect(yearOptions, func(_ string) {
+		is_creationDateFromSelect = true
+	})
+	creationDateFromSelect.PlaceHolder = "Année de début"
+	creationDateToSelect = widget.NewSelect(yearOptions, func(_ string) {
+		is_creationDateToSelect = true
+	})
+	creationDateToSelect.PlaceHolder = "Année de fin"
+
+	firstAlbumFromSelect = widget.NewSelect(yearOptions, func(_ string) {
+		is_firstAlbumFromSelect = true
+	})
+	firstAlbumFromSelect.PlaceHolder = "Année de début"
+	firstAlbumToSelect = widget.NewSelect(yearOptions, func(_ string) {
+		is_firstAlbumToSelect = true
+	})
+	firstAlbumToSelect.PlaceHolder = "Année de fin"
+
+	// Générer les options pour le nombre de membres et créer le sélecteur
+	memberOptions := generateMemberOptions(1, 20)
+	numMembersSelect = widget.NewSelect(memberOptions, func(_ string) {
+		is_numMembersSelect = true
+	})
+	numMembersSelect.PlaceHolder = "Nombre de membres"
+
+	concertLocationSelect = widget.NewSelect(ConcertLocations, func(_ string) {
+		is_concertLocationSelect = true
+	})
+
+	applyFiltersButton := widget.NewButton("Appliquer les filtres", func() {
+		applyFilters() // Assurez-vous d'adapter cette fonction en conséquence
+	})
+
+	filterContainer = container.NewVBox(
+		widget.NewLabel("Filtre par date de création :"),
+		container.NewHBox(widget.NewLabel("De "), creationDateFromSelect, widget.NewLabel(" à "), creationDateToSelect),
+		widget.NewLabel("Filtre par date du premier album :"),
+		container.NewHBox(widget.NewLabel("De "), firstAlbumFromSelect, widget.NewLabel(" à "), firstAlbumToSelect),
+		widget.NewLabel("Filtre par nombre de membres :"),
+		numMembersSelect,
+		widget.NewLabel("Filtre par lieu de concert :"),
+		concertLocationSelect,
+		applyFiltersButton,
+	)
+
+	// Masquer les filtres par défaut
+	filterContainer.Hide()
+	filtersVisible = false
+}
+
+// Fonction pour générer une liste d'options de nombres entre min et max (inclus)
+func generateMemberOptions(min, max int) []string {
+	options := make([]string, max-min+1)
+	for i := range options {
+		options[i] = strconv.Itoa(min + i)
+	}
+	return options
+}
+
+// generateYearOptions génère une liste d'options d'années entre startYear et endYear
+func generateYearOptions(startYear, endYear int) []string {
+	years := make([]string, endYear-startYear+1)
+	for i := range years {
+		years[i] = strconv.Itoa(startYear + i)
+	}
+	return years
+}
+
+func toggleFiltersVisibility() {
+	filtersVisible = !filtersVisible
+	if filtersVisible {
+		filterContainer.Show()
+	} else {
+		filterContainer.Hide()
+	}
+	myWindow.Content().Refresh() // Rafraîchir l'affichage pour appliquer les changements
+}
+func setupGrid() {
+	// Initialiser ou réinitialiser la grille avec un nombre défini de colonnes
+	grid = container.NewGridWithColumns(5) // Vous pouvez ajuster le nombre de colonnes selon vos besoins
+
+	// Mettre à jour la grille avec les artistes actuels
+	updateGrid()
+}
+
+func setupGridContainer() *container.Scroll {
+	grid = container.NewGridWithColumns(5) // Ajustez selon vos besoins
+	updateGrid()
+
+	// Créez un conteneur scrollable en utilisant grid directement
+	scrollContainer := container.NewVScroll(grid)
+	return scrollContainer
+}
 
 func updateGrid() {
-	filteredArtists := artists // Appliquez votre logique de filtrage ici
-	if searchTerm != "" {
-		// filteredArtists = core.SearchInAllStruct(searchTerm, artists) // Exemple
+	// Appliquer le filtrage et la mise à jour de la grille
+	filteredArtists := artists
+	if searchTerm != "" && filtersVisible { // Modifier pour tenir compte de la visibilité des filtres
+		// Appliquez ici la logique de filtrage en fonction des champs remplis
+		applyFilters() // Vous pouvez ajuster cette partie selon vos besoins
 	}
 	showArtistsGrid(filteredArtists)
 }
@@ -137,48 +221,50 @@ func loadImageFromURL(urlStr string) *canvas.Image {
 	return image
 }
 
-// Appliquer les filtres et mettre à jour la grille
 func applyFilters() {
-	var filteredArtists []core.Artist
+	var filteredArtists []core.Artist = artistsRef // Commencer avec tous les artistes
 
 	// Appliquer le filtre par date de création s'il est renseigné
-	creationDateFromStr := creationDateFromEntry.Text
-	if creationDateFromStr != "" {
-		// Convertir l'année en entier
-		creationDateFrom, _ := strconv.Atoi(creationDateFromStr)
-		// Filtrer les artistes en fonction de l'année de création
-		filteredArtists = core.FilterByCreationDate(artistsRef, creationDateFrom)
-	} else {
-		// Si le filtre n'est pas renseigné, utiliser tous les artistes non filtrés jusqu'à présent
-		filteredArtists = artistsRef
+
+	creationDateFrom, creationDateTo := getNumberFromSelect(creationDateFromSelect, is_creationDateToSelect), getNumberFromSelect(creationDateToSelect, is_creationDateFromSelect)
+	if creationDateFrom != -1 || creationDateTo != -1 {
+		filteredArtists = core.FilterByCreationDate(filteredArtists, creationDateFrom, creationDateTo)
 	}
 
 	// Appliquer le filtre par date du premier album s'il est renseigné
-	firstAlbumFromStr := firstAlbumFromEntry.Text
-	if firstAlbumFromStr != "" {
-		// Convertir l'année en entier
-		firstAlbumFrom, _ := strconv.Atoi(firstAlbumFromStr)
-		// Filtrer les artistes en fonction de l'année du premier album
-		filteredArtists = core.FilterByFirstAlbumDate(filteredArtists, firstAlbumFrom)
+	firstAlbumFrom, firstAlbumTo := getNumberFromSelect(firstAlbumFromSelect, is_firstAlbumToSelect), getNumberFromSelect(firstAlbumToSelect, is_firstAlbumFromSelect)
+	if firstAlbumFrom != -1 || firstAlbumTo != -1 {
+		filteredArtists = core.FilterByFirstAlbumDate(filteredArtists, firstAlbumFrom, firstAlbumTo)
 	}
 
 	// Appliquer le filtre par nombre de membres s'il est renseigné
-	numMembersStr := numMembersEntry.Text
-	if numMembersStr != "" {
-		numMembers, _ := strconv.Atoi(numMembersStr)
-		// Filtrer les artistes en fonction du nombre de membres
+	numMembers := getNumberFromSelect(numMembersSelect, is_numMembersSelect)
+	if is_numMembersSelect {
 		filteredArtists = core.FilterByNumberOfMembers(filteredArtists, numMembers)
 	}
 
 	// Appliquer le filtre par lieu de concert s'il est renseigné
-	concertLocation := concertLocationSelect.Selected
-	if concertLocation != "" {
-		// Filtrer les artistes en fonction du lieu de concert sélectionné
+
+	if is_concertLocationSelect {
+		concertLocation := concertLocationSelect.Selected
 		filteredArtists = core.FilterByConcertLocation(filteredArtists, concertLocation)
 	}
 
 	// Mettre à jour la grille avec les artistes filtrés
 	showArtistsGrid(filteredArtists)
+}
+
+// getYearFromSelect extrait l'année sélectionnée à partir d'un widget.Select
+func getNumberFromSelect(selectWidget *widget.Select, isSelected bool) int {
+	if !isSelected {
+		return -1
+	}
+	if selectWidget.SelectedIndex() == -1 {
+		return -1
+	}
+	year, _ := strconv.Atoi(selectWidget.Options[selectWidget.SelectedIndex()])
+
+	return year
 }
 
 // Fonction pour afficher les détails de l'artiste
@@ -187,7 +273,7 @@ func showArtistDetails(artist core.Artist) {
 	fmt.Println("Nom =>", artist.Nom)
 	fmt.Println("Image =>", artist.Image)
 	fmt.Println("First Album =>", artist.FirstAlbum)
-	fmt.Println("Concerts liste =>", artist.Concerts)
+	fmt.Println("Concerts liste =>", artist.ConcertDates)
 	fmt.Println("Creation Album =>", artist.CreationDate)
 	fmt.Println("Relations =>", artist.Relations)
 }

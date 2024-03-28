@@ -6,24 +6,30 @@ import (
 )
 
 // Filtrer par date de création
-func FilterByCreationDate(artists []Artist, year int) []Artist {
-	yearIn := int64(year)
+func FilterByCreationDate(artists []Artist, startYear, endYear int) []Artist {
 	var filteredArtists []Artist
+
 	for _, artist := range artists {
-		if artist.CreationDate == yearIn {
+		// Extraire l'année du premier album
+		albumYearStr := strconv.Itoa(int(artist.CreationDate)) // Supposons que FirstAlbum soit au format DD-MM-YYYY
+		albumYear, _ := strconv.Atoi(albumYearStr)
+		// Appliquer la logique de filtrage avec gestion des valeurs -1
+		if (startYear == -1 || albumYear >= startYear) && (endYear == -1 || albumYear <= endYear) {
 			filteredArtists = append(filteredArtists, artist)
 		}
 	}
 	return filteredArtists
 }
 
-// Filtrer par date du premier album
-func FilterByFirstAlbumDate(artists []Artist, year int) []Artist {
+func FilterByFirstAlbumDate(artists []Artist, startYear, endYear int) []Artist {
 	var filteredArtists []Artist
 
 	for _, artist := range artists {
-		intYear, _ := strconv.Atoi(strings.Split(artist.FirstAlbum, "-")[2])
-		if intYear == year {
+		// Extraire l'année du premier album
+		albumYearStr := strings.Split(artist.FirstAlbum, "-")[2] // Supposons que FirstAlbum soit au format DD-MM-YYYY
+		albumYear, _ := strconv.Atoi(albumYearStr)
+		// Appliquer la logique de filtrage avec gestion des valeurs -1
+		if (startYear == -1 || albumYear >= startYear) && (endYear == -1 || albumYear <= endYear) {
 			filteredArtists = append(filteredArtists, artist)
 		}
 	}
@@ -45,7 +51,7 @@ func FilterByNumberOfMembers(artists []Artist, numMembers int) []Artist {
 func FilterByConcertLocation(artists []Artist, location string) []Artist {
 	var filteredArtists []Artist
 	for _, artist := range artists {
-		for _, concert := range artist.Concerts {
+		for _, concert := range artist.ConcertDates {
 			if concert.Location.Locations[0] == location {
 				filteredArtists = append(filteredArtists, artist)
 				break // Une fois qu'un concert correspondant est trouvé, passer à l'artiste suivant

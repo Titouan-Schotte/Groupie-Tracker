@@ -71,19 +71,12 @@ func (d *Date) UnmarshalJSON(data []byte) {
 func Api_artists() []Artist {
 	var response []Artist
 
-	res, err := http.Get("https://groupietrackers.herokuapp.com/api/artists")
-	if err != nil {
-		fmt.Println("Error getting artists:", err)
-		return nil
-	}
+	res, _ := http.Get("https://groupietrackers.herokuapp.com/api/artists")
+
 	defer res.Body.Close()
 
 	body := newFunction(res)
-
-	if err := json.Unmarshal(body, &response); err != nil {
-		fmt.Println("Error unmarshalling artist response:", err)
-		return nil
-	}
+	json.Unmarshal(body, &response)
 
 	for i, p := range response {
 		fmt.Printf("Artist %d: %s\n", i+1, p.Nom)
@@ -100,27 +93,18 @@ func Api_dates() {
 		Dates []string `json:"dates"`
 	}
 
-	res, err := http.Get("https://groupietrackers.herokuapp.com/api/dates")
-	if err != nil {
-		fmt.Println("Error getting dates:", err)
-		return
-	}
+	res, _ := http.Get("https://groupietrackers.herokuapp.com/api/dates")
+
 	defer res.Body.Close()
 
 	body := newFunction(res)
-
-	if err := json.Unmarshal(body, &response4); err != nil {
-		fmt.Println("Error unmarshalling dates response:", err)
-		return
-	}
+	json.Unmarshal(body, &response4)
 
 	for i, item := range response4["index"] {
 		for _, dateStr := range item.Dates {
 			var date Date
-			if err := json.Unmarshal([]byte("\""+dateStr+"\""), &date); err != nil {
-				fmt.Println("Error unmarshalling date:", err)
-				continue
-			}
+			json.Unmarshal([]byte("\""+dateStr+"\""), &date)
+
 			fmt.Printf("Date %d: ID: %d, Day: %d, Month: %d, Year: %d\n", i+1, item.Id, date.Day, date.Month, date.Year)
 		}
 	}
@@ -129,19 +113,12 @@ func Api_dates() {
 func Api_location() {
 	var response2 APIResponseLocation
 
-	res, err := http.Get("https://groupietrackers.herokuapp.com/api/locations")
-	if err != nil {
-		fmt.Println("Error getting locations:", err)
-		return
-	}
+	res, _ := http.Get("https://groupietrackers.herokuapp.com/api/locations")
+
 	defer res.Body.Close()
 
 	body := newFunction(res)
-
-	if err := json.Unmarshal(body, &response2); err != nil {
-		fmt.Println("Error unmarshalling locations response:", err)
-		return
-	}
+	json.Unmarshal(body, &response2)
 
 	for i, location := range response2.Locations {
 		fmt.Printf("Location %d: %s\n", i+1, location)
@@ -149,10 +126,7 @@ func Api_location() {
 }
 
 func newFunction(res *http.Response) []byte {
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		fmt.Println("Error reading response body:", err)
-		return nil
-	}
+	body, _ := ioutil.ReadAll(res.Body)
+
 	return body
 }

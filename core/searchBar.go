@@ -19,7 +19,7 @@ func SearchInAllStruct(inp string, artists []Artist) []Artist {
 		for _, member := range artist.Members {
 			artistQuery = append(artistQuery, member)
 		}
-		for _, concert := range artist.Concerts {
+		for _, concert := range artist.ConcertDates {
 			artistQuery = append(artistQuery, strconv.Itoa(concert.Date.Day))
 			artistQuery = append(artistQuery, strconv.Itoa(concert.Date.Month))
 			artistQuery = append(artistQuery, strconv.Itoa(concert.Date.Year))
@@ -83,7 +83,7 @@ func artistData(artist Artist) []string {
 	for _, member := range artist.Members {
 		data = append(data, member)
 	}
-	for _, concert := range artist.Concerts {
+	for _, concert := range artist.ConcertDates {
 		data = append(data, strconv.Itoa(concert.Date.Day), strconv.Itoa(concert.Date.Month), strconv.Itoa(concert.Date.Year), concert.Location.Locations[0])
 	}
 	return data
