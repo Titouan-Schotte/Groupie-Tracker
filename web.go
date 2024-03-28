@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
@@ -37,6 +36,7 @@ var (
 	filterContainer           *fyne.Container
 )
 
+<<<<<<< HEAD
 func home() {
 	myApp = app.New()
 	myWindow = myApp.NewWindow("Groupie Tracker")
@@ -66,20 +66,28 @@ func home() {
 }
 
 func setupSearchComponents() (*widget.Entry, *widget.Button) {
+=======
+func setupSearchComponents() *widget.Entry {
+>>>>>>> 3b8c4f2bc45c2184e4456e5249116f7fbd68ea0b
 	searchEntry := widget.NewEntry()
 	searchEntry.SetPlaceHolder("Rechercher un artiste")
-
-	searchButton := widget.NewButton("Rechercher", func() {
-		searchTerm = searchEntry.Text
+	// Utiliser l'événement OnChanged pour déclencher la recherche à chaque frappe
+	searchEntry.OnChanged = func(text string) {
+		fmt.Printf("%s", text)
+		if text != "" {
+			artists = core.SearchInAllStruct(text, artistsRef) // Utilisez artistsRef pour rechercher parmi tous les artistes
+		} else {
+			artists = artistsRef
+		}
 		updateGrid()
-	})
+	}
 
-	return searchEntry, searchButton
+	return searchEntry
 }
 
 func setupFilterComponents() {
 	// Générer les options d'années pour les menus déroulants
-	yearOptions := generateYearOptions(1900, 2024)
+	yearOptions := generateYearOptions(1950, 2024)
 	// Créer les sélecteurs d'années avec les options générées
 	creationDateFromSelect = widget.NewSelect(yearOptions, func(_ string) {
 		is_creationDateFromSelect = true
@@ -188,19 +196,18 @@ func updateGrid() {
 func showArtistsGrid(artists []core.Artist) {
 	grid.Objects = nil
 	for _, artist := range artists {
-		image := loadImageFromURL(artist.Image)
-		// Limit the maximum size of the image to 500x500
+		currentArtist := artist // Créer une copie locale de la variable pour la capture
+		image := preloaderImages[artist.Id]
+		// Limiter la taille maximale de l'image à 500x500
 		if image.Size().Width > 500 || image.Size().Height > 500 {
 			image.Resize(fyne.NewSize(500, 500))
 		}
-		// Create a container for the image
+		// Créer un conteneur pour l'image
 		imageContainer := container.New(layout.NewMaxLayout(), image)
-		fmt.Println(artist.Image)
 
-		// Ajouter le bouton avec le nom de l'artiste en dessous de l'image
-		button := widget.NewButton(artist.Nom, func() {
-			fmt.Println(artist.Image)
-			showArtistDetails(artist)
+		// Ajouter un bouton avec le nom de l'artiste en dessous de l'image
+		button := widget.NewButton(currentArtist.Nom, func() {
+			showArtistDetails(currentArtist) // Utiliser la copie locale dans la fermeture
 		})
 
 		// Créer un conteneur pour organiser l'image et le bouton
@@ -270,11 +277,37 @@ func getNumberFromSelect(selectWidget *widget.Select, isSelected bool) int {
 
 // Fonction pour afficher les détails de l'artiste
 func showArtistDetails(artist core.Artist) {
-	fmt.Println("ID =>", artist.Id)
-	fmt.Println("Nom =>", artist.Nom)
-	fmt.Println("Image =>", artist.Image)
-	fmt.Println("First Album =>", artist.FirstAlbum)
-	fmt.Println("Concerts liste =>", artist.ConcertDates)
-	fmt.Println("Creation Album =>", artist.CreationDate)
-	fmt.Println("Relations =>", artist.Relations)
+	nameLabel := widget.NewLabelWithStyle(artist.Nom, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	nameLabel.TextStyle = fyne.TextStyle{Bold: true}
+
+	image := preloaderImagesForPopup[artist.Id] // Utilisez loadImageFromURL pour obtenir l'image
+	image.SetMinSize(fyne.NewSize(200, 200))
+
+	// Création des labels pour les autres détails
+	firstAlbumLabel := widget.NewLabel("First Album: " + artist.FirstAlbum)
+	creationDateLabel := widget.NewLabel(fmt.Sprintf("Creation Album: %d", artist.CreationDate))
+
+	// Organiser les labels dans un conteneur
+	detailsContainer := container.NewVBox(firstAlbumLabel, creationDateLabel)
+	detailsContainer.Add(widget.NewLabel("Membre(s) de la formation :"))
+	for _, member := range artist.Members {
+		detailsContainer.Add(widget.NewLabel(" - " + member))
+	}
+
+	// Mise en page avec l'image et les détails textuels
+	content := container.NewHBox(detailsContainer, image)
+
+	concertsLabel := container.NewVBox(widget.NewLabel("Concerts :"))
+	for _, concert := range artist.ConcertDates {
+		concertsLabel.Add(widget.NewLabel(fmt.Sprintf("- à %s le %d-%d-%d", concert.Location.Locations[0], concert.Date.Day, concert.Date.Month, concert.Date.Year)))
+	}
+	content.Add(concertsLabel)
+	// Ajoutez le nom en haut
+	contentWithHeader := container.NewVBox(nameLabel, content)
+
+	// Créez et affichez la popup
+	popUp := widget.NewPopUp(contentWithHeader, myWindow.Canvas())
+	popUp.Show()
+	popUp.Resize(fyne.NewSize(600, 400))
+	popUp.Move(fyne.NewPos(myWindow.Canvas().Size().Width/2-300, myWindow.Canvas().Size().Height/2-100))
 }
