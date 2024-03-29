@@ -10,15 +10,15 @@ import (
 )
 
 type Artist struct {
-	Id           int      `json:"id"`
-	Image        string   `json:"image"`
-	Nom          string   `json:"name"`
-	Members      []string `json:"members"`
-	CreationDate int64    `json:"creationDate"`
-	FirstAlbum   string   `json:"firstAlbum"`
-	Locations    string   `json:"locations"`
-	ConcertDates []Concert
-	Relations    string `json:"relations"`
+	Id           int       `json:"id"`
+	Image        string    `json:"image"`
+	Nom          string    `json:"name"`
+	Members      []string  `json:"members"`
+	CreationDate int64     `json:"creationDate"`
+	FirstAlbum   string    `json:"firstAlbum"`
+	Locations    string    `json:"locations"`
+	ConcertDates []Concert `json:"concertDates"`
+	Relations    string    `json:"relations"`
 }
 
 type Member struct {
