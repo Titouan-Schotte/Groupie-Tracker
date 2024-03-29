@@ -3,6 +3,7 @@ package core
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"fyne.io/fyne/v2"
@@ -14,50 +15,60 @@ func mapImage(lat, long float64) string {
 	apiKey := "98dHC1zw62rCO5MgbyLo~-RXs8b5NOfEDf1Ed_fpG5w~ApA31rcfZ3Il_YTnP5E7_VKZQYxqvk8eO5R2e5hzfQuR9jXpwfU_X5Y0wSv-K-iD"
 
 	const bingMapsStaticURL = "https://dev.virtualearth.net/REST/v1/Imagery/Map/Road"
-	return fmt.Sprintf("%s/%.6f,%.6f/16?mapSize=800,500&pp=%.6f,%.6f;66&mapLayer=Basemap,Buildings&key=%s",
+	return fmt.Sprintf("%s/%.6f,%.6f/16?mapSize=1000000,625000&pp=%.6f,%.6f;66&mapLayer=Basemap,Buildings&key=%s",
 		bingMapsStaticURL, lat, long, lat, long, apiKey)
 }
 
-func getCoordinates(city string) (float64, float64, error) {
-	// Call the API to get the coordinates of the city
-	// Replace the API_URL with the appropriate URL for the Map API you are using
-	API_URL := "https://nominatim.openstreetmap.org/search?q=%s&format=json&limit=1" + city
-	response, err := http.Get(API_URL)
-	if err != nil {
-		return 0, 0, err
-	}
-	defer response.Body.Close()
-
-	// Parse the response to extract the latitude and longitude
-	var data struct {
-		Latitude  float64 `json:"latitude"`
-		Longitude float64 `json:"longitude"`
-	}
-	err = json.NewDecoder(response.Body).Decode(&data)
-	if err != nil {
-		return 0, 0, err
-	}
-
-	return data.Latitude, data.Longitude, nil
+type Location struct {
+	Name      string  `json:"name"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+	Country   string  `json:"country"`
 }
 
-func GenerateMapImage(city string) (fyne.Resource, error) {
-	// obtient les coordonnées de la ville
-	latitude, longitude, err := getCoordinates(city)
-	if err != nil {
-		return nil, err
+func getCoordinates(city string) (float64, float64) {
+	// Call the API to get the coordinates of the city
+	// Replace the API_URL with the appropriate URL for the Map API you are using
+	apiURL := "https://api.api-ninjas.com/v1/geocoding?city=" + city
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", apiURL, nil)
+
+	req.Header.Add("X-Api-Key", "VOdAuPTF1gLm8w2EIloGqw==w5vdhDxxJalElYDG")
+
+	resp, _ := client.Do(req)
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusOK {
+		bodyBytes, _ := ioutil.ReadAll(resp.Body)
+
+		// Unmarshal the JSON data into a slice of Location structs
+		var locations []Location
+		json.Unmarshal(bodyBytes, &locations)
+
+		// Example of accessing the unmarshalled data
+		for _, location := range locations {
+			return location.Latitude, location.Longitude
+		}
+	} else {
+		fmt.Println("Error:", resp.StatusCode)
 	}
+	return 0, 0
+}
+
+func GenerateMapImage(city string) fyne.Resource {
+	// obtient les coordonnées de la ville
+	latitude, longitude := getCoordinates(city)
+	fmt.Println(latitude, longitude)
 	imageURL := mapImage(latitude, longitude)
 	// appel de la fonction pour obtenir l'image
-	resource, err := fyne.LoadResourceFromURLString(imageURL)
-	if err != nil {
-		return nil, err
-	}
+	fmt.Println(imageURL)
+	resource, _ := fyne.LoadResourceFromURLString(imageURL)
 
 	// création de l'image
 	image := canvas.NewImageFromResource(resource)
 	image.FillMode = canvas.ImageFillContain
 	image.SetMinSize(fyne.NewSize(200, 200)) // Ajuster la taille de l'image
-
-	return fyne.LoadResourceFromURLString(imageURL)
+	ressource, _ := fyne.LoadResourceFromURLString(imageURL)
+	return ressource
 }

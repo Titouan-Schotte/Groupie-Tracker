@@ -2,29 +2,31 @@ package main
 
 import (
 	"Groupie_Tracker/core"
-	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 	"image/color"
+	"slices"
 )
 
 var preloaderImages = map[int]*canvas.Image{}
 var preloaderImagesForPopup = map[int]*canvas.Image{}
+var concertsLocations = []string{}
 
 func main() {
 	artistsRef = core.Api_artists()
 
 	artists = artistsRef
-	for i, artist := range artists {
+	for _, artist := range artists {
 		preloaderImages[artist.Id] = loadImageFromURL(artist.Image)
 		preloaderImagesForPopup[artist.Id] = loadImageFromURL(artist.Image)
-		artistsRef[i].ConcertDates = append(artistsRef[i].ConcertDates, core.Concert{Date: core.Date{Year: 2012, Month: 9, Day: 22}, Location: "Dublin"})
-		artistsRef[i].ConcertDates = append(artistsRef[i].ConcertDates, core.Concert{Date: core.Date{Year: 2012, Month: 6, Day: 22}, Location: "Berlin"})
-		fmt.Println(len(artistsRef[i].Relations))
-
+		for _, concert := range artist.ConcertDates {
+			if !slices.Contains(concertsLocations, concert.Location) {
+				concertsLocations = append(concertsLocations, concert.Location)
+			}
+		}
 	}
 	artists = artistsRef
 
@@ -80,7 +82,7 @@ func showMainPage(app fyne.App, window fyne.Window) {
 	mainContainer := container.NewBorder(topContainer, nil, nil, nil, setupGridContainer())
 
 	myWindow.SetContent(mainContainer)
-	myWindow.Resize(fyne.NewSize(1600, 1200))
+	myWindow.Resize(fyne.NewSize(1600, 1000))
 	myWindow.Show()
 
 	window.Close()

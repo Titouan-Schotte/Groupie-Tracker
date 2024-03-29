@@ -27,8 +27,8 @@ type Member struct {
 }
 
 type Concert struct {
-	Date     Date                `json:"dates"`
-	Location APIResponseLocation `json:"locations"`
+	Date     Date   `json:"dates"`
+	Location string `json:"locations"`
 }
 
 type APIResponseLocation struct {
@@ -68,6 +68,11 @@ func (d *Date) UnmarshalJSON(data []byte) {
 	return
 }
 
+type RelationConcert struct {
+	Id             int                 `json:"id"`
+	DatesLocations map[string][]string `json:"datesLocations"`
+}
+
 func Api_artists() []Artist {
 	var response []Artist
 
@@ -79,9 +84,32 @@ func Api_artists() []Artist {
 	json.Unmarshal(body, &response)
 
 	for i, p := range response {
-		fmt.Printf("Artist %d: %s\n", i+1, p.Nom)
-		for j, concert := range p.ConcertDates {
-			fmt.Printf("  Concert %d: Date - %d-%d-%d, Location - %v\n", j+1, concert.Date.Day, concert.Date.Month, concert.Date.Year, concert.Location.Locations)
+		var responseRel RelationConcert
+
+		fmt.Printf("Artist %d: %s\n", i+1, p.Relations)
+		resRel, _ := http.Get(p.Relations)
+
+		defer resRel.Body.Close()
+
+		bodyRel := newFunction(resRel) // Assurez-vous que cette fonction lit correctement le corps de la réponse
+		json.Unmarshal(bodyRel, &responseRel)
+
+		for location, dates := range responseRel.DatesLocations {
+			for _, date := range dates { // Itérer sur chaque date dans la slice
+				fmt.Printf("%s %s", location, date)
+				dateSplit := strings.Split(date, "-")
+				if len(dateSplit) == 3 { // Vérifiez que la date est bien formée
+					dayIn, _ := strconv.Atoi(dateSplit[0])
+					monthIn, _ := strconv.Atoi(dateSplit[1])
+					yearIn, _ := strconv.Atoi(dateSplit[2])
+					concertDate := Date{
+						Day:   dayIn,
+						Month: monthIn,
+						Year:  yearIn,
+					}
+					response[i].ConcertDates = append(response[i].ConcertDates, Concert{Date: concertDate, Location: location})
+				}
+			}
 		}
 	}
 	return response

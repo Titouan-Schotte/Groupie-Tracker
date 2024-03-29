@@ -31,7 +31,6 @@ var (
 	is_firstAlbumToSelect     = false
 	is_numMembersSelect       = false
 	is_concertLocationSelect  = false
-	ConcertLocations          = []string{"Location 1", "Location 2"}
 	artistsRef                []core.Artist
 	filtersVisible            bool // Nouveau : état de visibilité des filtres
 	filterContainer           *fyne.Container
@@ -83,7 +82,7 @@ func setupFilterComponents() {
 	})
 	numMembersSelect.PlaceHolder = "Nombre de membres"
 
-	concertLocationSelect = widget.NewSelect(ConcertLocations, func(_ string) {
+	concertLocationSelect = widget.NewSelect(concertsLocations, func(_ string) {
 		is_concertLocationSelect = true
 	})
 
@@ -244,60 +243,89 @@ func getNumberFromSelect(selectWidget *widget.Select, isSelected bool) int {
 	return year
 }
 
-// Fonction pour afficher les détails de l'artiste
 func showArtistDetails(artist core.Artist) {
-
 	nameLabel := widget.NewLabelWithStyle(artist.Nom, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	nameLabel.TextStyle = fyne.TextStyle{Bold: true}
 
-	image := preloaderImagesForPopup[artist.Id] // Utilisez loadImageFromURL pour obtenir l'image
+	image := preloaderImagesForPopup[artist.Id] // Utilisation hypothétique de loadImageFromURL pour l'image
 	image.SetMinSize(fyne.NewSize(200, 200))
 
-	// Création des labels pour les autres détails
 	firstAlbumLabel := widget.NewLabel("First Album: " + artist.FirstAlbum)
 	creationDateLabel := widget.NewLabel(fmt.Sprintf("Creation Album: %d", artist.CreationDate))
 
-	// Organiser les labels dans un conteneur
-	detailsContainer := container.NewVBox(firstAlbumLabel, creationDateLabel)
-	detailsContainer.Add(widget.NewLabel("Membre(s) de la formation :"))
+	detailsContainer := container.NewVBox(nameLabel, firstAlbumLabel, creationDateLabel, widget.NewLabel("Membre(s) de la formation :"))
 	for _, member := range artist.Members {
 		detailsContainer.Add(widget.NewLabel(" - " + member))
 	}
 
-	concertsLabel := container.NewVBox(widget.NewLabel("Concerts :"))
-	for _, concert := range artist.ConcertDates {
-		concertsLabel.Add(widget.NewButton(fmt.Sprintf("- à %s, %s le %d-%d-%d", strings.Split(concert.Location, "-")[0], concert.Date.Day, concert.Date.Month, concert.Date.Year), func() {
-			showMapPopup(concert.Location)
-		}))
+	concertsContainer := container.NewVBox(widget.NewLabel("Concerts :"))
+	content := container.NewHBox(detailsContainer, image, concertsContainer) // Contenu à mettre à jour avec les concerts
+
+	// Pagination
+	currentPage := 0
+	totalPages := (len(artist.ConcertDates)-1)/10 + 1
+
+	updateConcertsPage := func(page int) {
+		concertsContainer.Objects = []fyne.CanvasObject{widget.NewLabel("Concerts :")}
+		start := page * 10
+		end := start + 10
+		if end > len(artist.ConcertDates) {
+			end = len(artist.ConcertDates)
+		}
+
+		for _, concert := range artist.ConcertDates[start:end] {
+			concertIn := concert
+			concertsContainer.Add(widget.NewButton(fmt.Sprintf("- à %s le %d-%d-%d", strings.Split(concertIn.Location, "-")[0], concertIn.Date.Day, concertIn.Date.Month, concertIn.Date.Year), func() {
+				showMapPopup(strings.Split(concertIn.Location, "-")[0]) // Adapt this to your implementation
+			}))
+		}
+
+		content.Refresh()
 	}
 
-	// Mise en page avec l'image et les détails textuels
-	content := container.NewHBox(detailsContainer, image, concertsLabel)
+	fullContent := container.NewVBox(content)
+	if totalPages > 1 {
+		// Boutons de navigation placés à droite
+		navigationContainer := container.NewHBox(
+			layout.NewSpacer(), // Ce spacer pousse les boutons vers la droite
+			widget.NewButton(" Précédent ", func() {
+				if currentPage > 0 {
+					currentPage--
+					updateConcertsPage(currentPage)
+				}
+			}),
+			widget.NewButton("   Suivant    ", func() {
+				if currentPage < totalPages-1 {
+					currentPage++
+					updateConcertsPage(currentPage)
+				}
+			}),
+		)
+		// Mise en page avec navigation
+		fullContent = container.NewVBox(content, navigationContainer)
+	}
 
-	// Bouton pour ouvrir la page Spotify de l'artiste
 	spotifyButton := widget.NewButton("Écouter sur Spotify", func() {
 		searchQuery := strings.ReplaceAll(artist.Nom, " ", "%20")
 		urlStr := "https://open.spotify.com/search/" + searchQuery
-
-		// Construire l'URL en utilisant net/url
 		parsedUrl, _ := url.Parse(urlStr)
-
-		// Utiliser fyne pour ouvrir l'URL
 		fyne.CurrentApp().OpenURL(parsedUrl)
 	})
 
-	// Ajoutez le nom en haut et le bouton Spotify en bas
-	contentWithHeader := container.NewVBox(nameLabel, content, spotifyButton)
+	contentWithHeaderAndFooter := container.NewVBox(fullContent, spotifyButton)
 
-	// Créez et affichez la popup
-	popUp := widget.NewPopUp(contentWithHeader, myWindow.Canvas())
+	// Création et affichage de la popup
+	popUp := widget.NewPopUp(contentWithHeaderAndFooter, myWindow.Canvas())
 	popUp.Show()
 	popUp.Resize(fyne.NewSize(600, 400))
 	popUp.Move(fyne.NewPos(myWindow.Canvas().Size().Width/2-300, myWindow.Canvas().Size().Height/2-200))
+
+	// Affichez la première page de concerts
+	updateConcertsPage(0)
 }
 
 func showMapPopup(location string) {
-	backgroundImage := loadImageFromURL("https://t3.ftcdn.net/jpg/02/23/60/54/360_F_223605406_nGKtPp42ZRx4ZxvrcVeT3Ek6V5Uw4ETh.jpg")
+	backgroundImageRessource := core.GenerateMapImage(location)
+	backgroundImage := canvas.NewImageFromResource(backgroundImageRessource)
 	backgroundImage.FillMode = canvas.ImageFillStretch // Ajuster pour remplir l'espace
 	content := container.NewMax(backgroundImage)
 
