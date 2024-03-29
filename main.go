@@ -1,3 +1,7 @@
+/*
+Titouan Schotté
+Main core launch pages
+*/
 package main
 
 import (
@@ -16,6 +20,7 @@ var preloaderImagesForPopup = map[int]*canvas.Image{}
 var concertsLocations = []string{}
 
 func main() {
+	//Get Artists by api
 	artistsRef = core.Api_artists()
 
 	artists = artistsRef
@@ -30,28 +35,28 @@ func main() {
 	}
 	artists = artistsRef
 
+	//Create new app
 	myApp := app.New()
 	showHomePage(myApp)
 }
 
+// HOME PAGE
 func showHomePage(app fyne.App) {
 	window := app.NewWindow("Groupie Tracker - Accueil")
 	window.CenterOnScreen()
 
-	// Charger l'image de fond prétraitée avec un effet de flou
 	backgroundImage := loadImageFromURL("https://t3.ftcdn.net/jpg/02/23/60/54/360_F_223605406_nGKtPp42ZRx4ZxvrcVeT3Ek6V5Uw4ETh.jpg")
-	backgroundImage.FillMode = canvas.ImageFillStretch // Ajuster pour remplir l'espace
-
+	backgroundImage.FillMode = canvas.ImageFillStretch
 	title := canvas.NewText("Groupie Tracker", color.White)
 	title.Alignment = fyne.TextAlignCenter
 	title.TextSize = 24
 	title.TextStyle = fyne.TextStyle{Bold: true}
 
 	enterButton := widget.NewButton("Entrer", func() {
-		showMainPage(app, window) // Ouvrir la page principale
+		showMainPage(app, window)
 	})
 
-	// Empiler l'image de fond derrière les autres widgets
+	// Stack the background image behind the other widgets
 	content := container.NewMax(backgroundImage, container.NewCenter(container.NewVBox(title, enterButton)))
 
 	window.SetContent(content)
@@ -60,24 +65,25 @@ func showHomePage(app fyne.App) {
 	window.ShowAndRun()
 }
 
+// MAIN PAGE with artists ... etc
 func showMainPage(app fyne.App, window fyne.Window) {
 	myWindow = app.NewWindow("Groupie Tracker")
 	myWindow.CenterOnScreen()
-	// Configuration de la barre de recherche
+	// Configuring the search bar
 	searchEntry := setupSearchComponents()
 
-	// Configuration initiale des filtres (masqués par défaut)
+	// Initial configuration of filters (hidden by default)
 	setupFilterComponents()
 
-	// Bouton pour afficher/masquer les filtres
+	// Button to show/hide filters
 	toggleFiltersButton := widget.NewButton("Afficher les filtres", func() {
 		toggleFiltersVisibility()
 	})
 
-	// Configuration de la grille d'artistes
+	// Configuring the artist grid
 	setupGrid()
 
-	// Agencement principal
+	// Main layout
 	topContainer := container.NewVBox(searchEntry, toggleFiltersButton, filterContainer)
 	mainContainer := container.NewBorder(topContainer, nil, nil, nil, setupGridContainer())
 

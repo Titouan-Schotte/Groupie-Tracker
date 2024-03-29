@@ -1,3 +1,7 @@
+/*
+Titouan Schotté
+File with filters algorithm
+*/
 package core
 
 import (
@@ -5,15 +9,16 @@ import (
 	"strings"
 )
 
-// Filtrer par date de création
+// Filter by creation date
 func FilterByCreationDate(artists []Artist, startYear, endYear int) []Artist {
 	var filteredArtists []Artist
 
 	for _, artist := range artists {
-		// Extraire l'année du premier album
-		albumYearStr := strconv.Itoa(int(artist.CreationDate)) // Supposons que FirstAlbum soit au format DD-MM-YYYY
+		// Extract the year of the first album
+		albumYearStr := strconv.Itoa(int(artist.CreationDate))
 		albumYear, _ := strconv.Atoi(albumYearStr)
-		// Appliquer la logique de filtrage avec gestion des valeurs -1
+
+		// Apply filtering logic with handling of -1 values
 		if (startYear == -1 || albumYear >= startYear) && (endYear == -1 || albumYear <= endYear) {
 			filteredArtists = append(filteredArtists, artist)
 		}
@@ -25,10 +30,12 @@ func FilterByFirstAlbumDate(artists []Artist, startYear, endYear int) []Artist {
 	var filteredArtists []Artist
 
 	for _, artist := range artists {
-		// Extraire l'année du premier album
-		albumYearStr := strings.Split(artist.FirstAlbum, "-")[2] // Supposons que FirstAlbum soit au format DD-MM-YYYY
+		// Extract the year of the first album
+
+		albumYearStr := strings.Split(artist.FirstAlbum, "-")[2]
 		albumYear, _ := strconv.Atoi(albumYearStr)
-		// Appliquer la logique de filtrage avec gestion des valeurs -1
+
+		// Apply filtering logic with handling of -1 values
 		if (startYear == -1 || albumYear >= startYear) && (endYear == -1 || albumYear <= endYear) {
 			filteredArtists = append(filteredArtists, artist)
 		}
@@ -36,7 +43,7 @@ func FilterByFirstAlbumDate(artists []Artist, startYear, endYear int) []Artist {
 	return filteredArtists
 }
 
-// Filtrer par nombre de membres
+// Filter by number of members
 func FilterByNumberOfMembers(artists []Artist, numMembers int) []Artist {
 	var filteredArtists []Artist
 	for _, artist := range artists {
@@ -47,14 +54,14 @@ func FilterByNumberOfMembers(artists []Artist, numMembers int) []Artist {
 	return filteredArtists
 }
 
-// Filtrer par lieux des concerts
+// Filter by concert locations
 func FilterByConcertLocation(artists []Artist, location string) []Artist {
 	var filteredArtists []Artist
 	for _, artist := range artists {
 		for _, concert := range artist.ConcertDates {
 			if concert.Location == location {
 				filteredArtists = append(filteredArtists, artist)
-				break // Une fois qu'un concert correspondant est trouvé, passer à l'artiste suivant
+				break // Once a matching concert is found, move on to the next artist
 			}
 		}
 	}

@@ -1,3 +1,7 @@
+/*
+Titouan Schotté
+App core main
+*/
 package main
 
 import (
@@ -32,18 +36,18 @@ var (
 	is_numMembersSelect       = false
 	is_concertLocationSelect  = false
 	artistsRef                []core.Artist
-	filtersVisible            bool // Nouveau : état de visibilité des filtres
+	filtersVisible            bool
 	filterContainer           *fyne.Container
 )
 
 func setupSearchComponents() *widget.Entry {
 	searchEntry := widget.NewEntry()
 	searchEntry.SetPlaceHolder("Rechercher un artiste")
-	// Utiliser l'événement OnChanged pour déclencher la recherche à chaque frappe
+	// Use the OnChanged event to trigger the search on each keystroke
 	searchEntry.OnChanged = func(text string) {
 		fmt.Printf("%s", text)
 		if text != "" {
-			artists = core.SearchInAllStruct(text, artistsRef) // Utilisez artistsRef pour rechercher parmi tous les artistes
+			artists = core.SearchInAllStruct(text, artistsRef) // Use artistsRef to search across all artists
 		} else {
 			artists = artistsRef
 		}
@@ -54,9 +58,9 @@ func setupSearchComponents() *widget.Entry {
 }
 
 func setupFilterComponents() {
-	// Générer les options d'années pour les menus déroulants
+	// Generate year options for drop-down menus
 	yearOptions := generateYearOptions(1950, 2024)
-	// Créer les sélecteurs d'années avec les options générées
+	//CREATE FILTERS :
 	creationDateFromSelect = widget.NewSelect(yearOptions, func(_ string) {
 		is_creationDateFromSelect = true
 	})
@@ -75,7 +79,6 @@ func setupFilterComponents() {
 	})
 	firstAlbumToSelect.PlaceHolder = "Année de fin"
 
-	// Générer les options pour le nombre de membres et créer le sélecteur
 	memberOptions := generateMemberOptions(1, 20)
 	numMembersSelect = widget.NewSelect(memberOptions, func(_ string) {
 		is_numMembersSelect = true
@@ -87,7 +90,7 @@ func setupFilterComponents() {
 	})
 
 	applyFiltersButton := widget.NewButton("Appliquer les filtres", func() {
-		applyFilters() // Assurez-vous d'adapter cette fonction en conséquence
+		applyFilters()
 	})
 
 	filterContainer = container.NewVBox(
@@ -102,12 +105,12 @@ func setupFilterComponents() {
 		applyFiltersButton,
 	)
 
-	// Masquer les filtres par défaut
+	// Hide filters by default
 	filterContainer.Hide()
 	filtersVisible = false
 }
 
-// Fonction pour générer une liste d'options de nombres entre min et max (inclus)
+// Function to generate a list of number options between min and max (inclusive)
 func generateMemberOptions(min, max int) []string {
 	options := make([]string, max-min+1)
 	for i := range options {
@@ -116,7 +119,7 @@ func generateMemberOptions(min, max int) []string {
 	return options
 }
 
-// generateYearOptions génère une liste d'options d'années entre startYear et endYear
+// generateYearOptions generates a list of year options between startYear and endYear
 func generateYearOptions(startYear, endYear int) []string {
 	years := make([]string, endYear-startYear+1)
 	for i := range years {
@@ -132,31 +135,33 @@ func toggleFiltersVisibility() {
 	} else {
 		filterContainer.Hide()
 	}
-	myWindow.Content().Refresh() // Rafraîchir l'affichage pour appliquer les changements
+	myWindow.Content().Refresh()
 }
 func setupGrid() {
-	// Initialiser ou réinitialiser la grille avec un nombre défini de colonnes
+
+	// Initialize or reset the grid with a defined number of columns
 	grid = container.NewGridWithColumns(5) // Vous pouvez ajuster le nombre de colonnes selon vos besoins
 
-	// Mettre à jour la grille avec les artistes actuels
+	// Update the grid with current artists
 	updateGrid()
 }
 
 func setupGridContainer() *container.Scroll {
-	grid = container.NewGridWithColumns(5) // Ajustez selon vos besoins
+	grid = container.NewGridWithColumns(5)
 	updateGrid()
 
-	// Créez un conteneur scrollable en utilisant grid directement
+	// Create a scrollable container using grid directly
 	scrollContainer := container.NewVScroll(grid)
 	return scrollContainer
 }
 
 func updateGrid() {
-	// Appliquer le filtrage et la mise à jour de la grille
+
+	// Apply filtering and grid updating
 	filteredArtists := artists
-	if searchTerm != "" && filtersVisible { // Modifier pour tenir compte de la visibilité des filtres
-		// Appliquez ici la logique de filtrage en fonction des champs remplis
-		applyFilters() // Vous pouvez ajuster cette partie selon vos besoins
+	if searchTerm != "" && filtersVisible {
+		// Apply filter logic here based on filled fields
+		applyFilters()
 	}
 	showArtistsGrid(filteredArtists)
 }
@@ -164,24 +169,19 @@ func updateGrid() {
 func showArtistsGrid(artists []core.Artist) {
 	grid.Objects = nil
 	for _, artist := range artists {
-		currentArtist := artist // Créer une copie locale de la variable pour la capture
+		currentArtist := artist // Create a local copy of the variable for capturing
 		image := preloaderImages[artist.Id]
-		// Limiter la taille maximale de l'image à 500x500
 		if image.Size().Width > 500 || image.Size().Height > 500 {
 			image.Resize(fyne.NewSize(500, 500))
 		}
-		// Créer un conteneur pour l'image
 		imageContainer := container.New(layout.NewMaxLayout(), image)
 
-		// Ajouter un bouton avec le nom de l'artiste en dessous de l'image
 		button := widget.NewButton(currentArtist.Nom, func() {
 			showArtistDetails(currentArtist) // Utiliser la copie locale dans la fermeture
 		})
 
-		// Créer un conteneur pour organiser l'image et le bouton
 		imageWithButton := container.New(layout.NewVBoxLayout(), imageContainer, button)
 
-		// Ajouter le conteneur à la grille
 		grid.Add(imageWithButton)
 	}
 
@@ -193,44 +193,41 @@ func loadImageFromURL(urlStr string) *canvas.Image {
 
 	image := canvas.NewImageFromResource(resource)
 	image.FillMode = canvas.ImageFillContain
-	image.SetMinSize(fyne.NewSize(200, 200)) // Adjust the size as needed
+	image.SetMinSize(fyne.NewSize(200, 200))
 	return image
 }
 
 func applyFilters() {
-	var filteredArtists []core.Artist = artistsRef // Commencer avec tous les artistes
-
-	// Appliquer le filtre par date de création s'il est renseigné
-
+	var filteredArtists []core.Artist = artistsRef // Start with all artists
+	// Apply the filter by creation date if it is specified
 	creationDateFrom, creationDateTo := getNumberFromSelect(creationDateFromSelect, is_creationDateToSelect), getNumberFromSelect(creationDateToSelect, is_creationDateFromSelect)
 	if creationDateFrom != -1 || creationDateTo != -1 {
 		filteredArtists = core.FilterByCreationDate(filteredArtists, creationDateFrom, creationDateTo)
 	}
 
-	// Appliquer le filtre par date du premier album s'il est renseigné
+	// Apply the filter by date of the first album if it is specified
 	firstAlbumFrom, firstAlbumTo := getNumberFromSelect(firstAlbumFromSelect, is_firstAlbumToSelect), getNumberFromSelect(firstAlbumToSelect, is_firstAlbumFromSelect)
 	if firstAlbumFrom != -1 || firstAlbumTo != -1 {
 		filteredArtists = core.FilterByFirstAlbumDate(filteredArtists, firstAlbumFrom, firstAlbumTo)
 	}
 
-	// Appliquer le filtre par nombre de membres s'il est renseigné
+	// Apply the filter by number of members if it is specified
 	numMembers := getNumberFromSelect(numMembersSelect, is_numMembersSelect)
 	if is_numMembersSelect {
 		filteredArtists = core.FilterByNumberOfMembers(filteredArtists, numMembers)
 	}
 
-	// Appliquer le filtre par lieu de concert s'il est renseigné
-
+	// Apply the filter by concert venue if it is specified
 	if is_concertLocationSelect {
 		concertLocation := concertLocationSelect.Selected
 		filteredArtists = core.FilterByConcertLocation(filteredArtists, concertLocation)
 	}
 
-	// Mettre à jour la grille avec les artistes filtrés
+	// Update grid with filtered artists
 	showArtistsGrid(filteredArtists)
 }
 
-// getYearFromSelect extrait l'année sélectionnée à partir d'un widget.Select
+// getYearFromSelect extracts the selected year from a widget.Select
 func getNumberFromSelect(selectWidget *widget.Select, isSelected bool) int {
 	if !isSelected {
 		return -1
@@ -246,7 +243,7 @@ func getNumberFromSelect(selectWidget *widget.Select, isSelected bool) int {
 func showArtistDetails(artist core.Artist) {
 	nameLabel := widget.NewLabelWithStyle(artist.Nom, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 
-	image := preloaderImagesForPopup[artist.Id] // Utilisation hypothétique de loadImageFromURL pour l'image
+	image := preloaderImagesForPopup[artist.Id]
 	image.SetMinSize(fyne.NewSize(200, 200))
 
 	firstAlbumLabel := widget.NewLabel("First Album: " + artist.FirstAlbum)
@@ -284,9 +281,9 @@ func showArtistDetails(artist core.Artist) {
 
 	fullContent := container.NewVBox(content)
 	if totalPages > 1 {
-		// Boutons de navigation placés à droite
+		// Navigation buttons placed on the right
 		navigationContainer := container.NewHBox(
-			layout.NewSpacer(), // Ce spacer pousse les boutons vers la droite
+			layout.NewSpacer(), // This spacer pushes the buttons to the right
 			widget.NewButton(" Précédent ", func() {
 				if currentPage > 0 {
 					currentPage--
@@ -300,7 +297,6 @@ func showArtistDetails(artist core.Artist) {
 				}
 			}),
 		)
-		// Mise en page avec navigation
 		fullContent = container.NewVBox(content, navigationContainer)
 	}
 
@@ -313,20 +309,20 @@ func showArtistDetails(artist core.Artist) {
 
 	contentWithHeaderAndFooter := container.NewVBox(fullContent, spotifyButton)
 
-	// Création et affichage de la popup
+	// Creation and display of the popup
 	popUp := widget.NewPopUp(contentWithHeaderAndFooter, myWindow.Canvas())
 	popUp.Show()
 	popUp.Resize(fyne.NewSize(600, 400))
 	popUp.Move(fyne.NewPos(myWindow.Canvas().Size().Width/2-300, myWindow.Canvas().Size().Height/2-200))
 
-	// Affichez la première page de concerts
+	// Display the first page of concerts
 	updateConcertsPage(0)
 }
 
 func showMapPopup(location string) {
 	backgroundImageRessource := core.GenerateMapImage(location)
 	backgroundImage := canvas.NewImageFromResource(backgroundImageRessource)
-	backgroundImage.FillMode = canvas.ImageFillStretch // Ajuster pour remplir l'espace
+	backgroundImage.FillMode = canvas.ImageFillStretch
 	content := container.NewMax(backgroundImage)
 
 	popUp := widget.NewPopUp(content, myWindow.Canvas())
