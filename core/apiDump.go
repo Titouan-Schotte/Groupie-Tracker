@@ -46,11 +46,6 @@ type Date struct {
 	Year  int `json:"year"`
 }
 
-// APIResponseDates represents the response structure for "date" data from the API.
-type APIResponseDates struct {
-	Dates []string `json:"dates"`
-}
-
 // UnmarshalJSON is a custom unmarshal function for Date type to handle special cases.
 func (d *Date) UnmarshalJSON(data []byte) {
 	var dateStr string
