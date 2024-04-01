@@ -22,12 +22,6 @@ type Artist struct {
 	Relations    string    `json:"relations"`
 }
 
-// Member represents a member of an artist group.
-type Member struct {
-	Surname string `json:"surname"`
-	Name    string `json:"name"`
-}
-
 // Concert represents a concert with its date and location.
 type Concert struct {
 	Date     Date                `json:"dates"`
