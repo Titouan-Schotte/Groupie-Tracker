@@ -3,17 +3,16 @@ package core
 import (
 	"encoding/json"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
 )
 
-// Artist represents an artist with their details.
 type Artist struct {
 	Id           int       `json:"id"`
 	Image        string    `json:"image"`
-	Name         string    `json:"name"`
+	Nom          string    `json:"name"`
 	Members      []string  `json:"members"`
 	CreationDate int64     `json:"creationDate"`
 	FirstAlbum   string    `json:"firstAlbum"`
@@ -22,25 +21,33 @@ type Artist struct {
 	Relations    string    `json:"relations"`
 }
 
-// Concert represents a concert with its date and location.
-type Concert struct {
-	Date     Date                `json:"dates"`
-	Location APIResponseLocation `json:"locations"`
+type Member struct {
+	Surname string `json:"surname"`
+	Name    string `json:"name"`
 }
 
-// APIResponseLocation represents the response structure for location data from the API.
+type Concert struct {
+	Date     Date   `json:"dates"`
+	Location string `json:"locations"`
+}
+
 type APIResponseLocation struct {
 	Locations []string `json:"locations"`
 }
 
-// Date represents a date with day, month, and year.
 type Date struct {
 	Day   int `json:"day"`
 	Month int `json:"month"`
 	Year  int `json:"year"`
 }
 
-// UnmarshalJSON is a custom unmarshal function for Date type to handle special cases.
+type API struct {
+}
+
+type APIResponseDates struct {
+	Dates []string `json:"dates"`
+}
+
 func (d *Date) UnmarshalJSON(data []byte) {
 	var dateStr string
 	json.Unmarshal(data, &dateStr)
@@ -61,7 +68,11 @@ func (d *Date) UnmarshalJSON(data []byte) {
 	return
 }
 
-// Api_artists retrieves artists' data from the API and shows it.
+type RelationConcert struct {
+	Id             int                 `json:"id"`
+	DatesLocations map[string][]string `json:"datesLocations"`
+}
+
 func Api_artists() []Artist {
 	var response []Artist
 
@@ -73,15 +84,37 @@ func Api_artists() []Artist {
 	json.Unmarshal(body, &response)
 
 	for i, p := range response {
-		fmt.Printf("Artist %d: %s\n", i+1, p.Name)
-		for j, concert := range p.ConcertDates {
-			fmt.Printf("  Concert %d: Date - %d-%d-%d, Location - %v\n", j+1, concert.Date.Day, concert.Date.Month, concert.Date.Year, concert.Location.Locations)
+		var responseRel RelationConcert
+
+		fmt.Printf("Artist %d: %s\n", i+1, p.Relations)
+		resRel, _ := http.Get(p.Relations)
+
+		defer resRel.Body.Close()
+
+		bodyRel := newFunction(resRel) // Assurez-vous que cette fonction lit correctement le corps de la réponse
+		json.Unmarshal(bodyRel, &responseRel)
+
+		for location, dates := range responseRel.DatesLocations {
+			for _, date := range dates { // Itérer sur chaque date dans la slice
+				fmt.Printf("%s %s", location, date)
+				dateSplit := strings.Split(date, "-")
+				if len(dateSplit) == 3 { // Vérifiez que la date est bien formée
+					dayIn, _ := strconv.Atoi(dateSplit[0])
+					monthIn, _ := strconv.Atoi(dateSplit[1])
+					yearIn, _ := strconv.Atoi(dateSplit[2])
+					concertDate := Date{
+						Day:   dayIn,
+						Month: monthIn,
+						Year:  yearIn,
+					}
+					response[i].ConcertDates = append(response[i].ConcertDates, Concert{Date: concertDate, Location: location})
+				}
+			}
 		}
 	}
 	return response
 }
 
-// Api_dates retrieves dates data from the API and shows it.
 func Api_dates() {
 	var response4 map[string][]struct {
 		Id    int      `json:"id"`
@@ -105,7 +138,6 @@ func Api_dates() {
 	}
 }
 
-// Api_location retrieves location data from the API and shows it.
 func Api_location() {
 	var response2 APIResponseLocation
 
@@ -121,9 +153,8 @@ func Api_location() {
 	}
 }
 
-// newFunction is a helper function to read response body from HTTP request.
 func newFunction(res *http.Response) []byte {
-	body, _ := io.ReadAll(res.Body)
+	body, _ := ioutil.ReadAll(res.Body)
 
 	return body
 }

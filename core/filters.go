@@ -59,7 +59,7 @@ func FilterByConcertLocation(artists []Artist, location string) []Artist {
 	var filteredArtists []Artist
 	for _, artist := range artists {
 		for _, concert := range artist.ConcertDates {
-			if concert.Location.Locations[0] == location {
+			if concert.Location == location {
 				filteredArtists = append(filteredArtists, artist)
 				break // Once a matching concert is found, move on to the next artist
 			}

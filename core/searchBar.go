@@ -20,7 +20,7 @@ func SearchInAllStruct(inp string, artists []Artist) []Artist {
 	potentials := []PotentialSearch{}
 	for _, artist := range artists {
 		convCreationDate := strconv.Itoa(int(artist.CreationDate))
-		artistQuery := []string{strings.ToLower(artist.Name), convCreationDate}
+		artistQuery := []string{strings.ToLower(artist.Nom), convCreationDate}
 		for _, member := range artist.Members {
 			artistQuery = append(artistQuery, strings.ToLower(member))
 		}
@@ -28,7 +28,7 @@ func SearchInAllStruct(inp string, artists []Artist) []Artist {
 			artistQuery = append(artistQuery, strconv.Itoa(concert.Date.Day))
 			artistQuery = append(artistQuery, strconv.Itoa(concert.Date.Month))
 			artistQuery = append(artistQuery, strconv.Itoa(concert.Date.Year))
-			artistQuery = append(artistQuery, strings.ToLower(concert.Location.Locations[0]))
+			artistQuery = append(artistQuery, strings.ToLower(concert.Location))
 		}
 
 		//Here we operate on the principle that the closer an artist is to the input, the more potential he has.
@@ -86,12 +86,12 @@ func containsAll(artist Artist, query []string) bool {
 
 func artistData(artist Artist) []string {
 	convCreationDate := strconv.Itoa(int(artist.CreationDate))
-	data := []string{strings.ToLower(artist.Name), convCreationDate}
+	data := []string{strings.ToLower(artist.Nom), convCreationDate}
 	for _, member := range artist.Members {
 		data = append(data, strings.ToLower(member))
 	}
 	for _, concert := range artist.ConcertDates {
-		data = append(data, strconv.Itoa(concert.Date.Day), strconv.Itoa(concert.Date.Month), strconv.Itoa(concert.Date.Year), strings.ToLower(concert.Location.Locations[0]))
+		data = append(data, strconv.Itoa(concert.Date.Day), strconv.Itoa(concert.Date.Month), strconv.Itoa(concert.Date.Year), strings.ToLower(concert.Location))
 	}
 	return data
 }

@@ -3,7 +3,7 @@ package core
 import (
 	"encoding/json"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"net/http"
 
 	"fyne.io/fyne/v2"
@@ -40,7 +40,7 @@ func getCoordinates(city string) (float64, float64) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusOK {
-		bodyBytes, _ := io.ReadAll(resp.Body)
+		bodyBytes, _ := ioutil.ReadAll(resp.Body)
 
 		// Unmarshal the JSON data into a slice of Location structs
 		var locations []Location
