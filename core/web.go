@@ -2,25 +2,28 @@
 Titouan Schotté
 App core main
 */
-package main
+package core
 
 import (
-	"Groupie_Tracker/core"
 	"fmt"
+	"net/url"
+	"strconv"
+	"strings"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
-	"net/url"
-	"strconv"
-	"strings"
 )
 
 var (
+	PreloaderImages           = map[int]*canvas.Image{}
+	PreloaderImagesForPopup   = map[int]*canvas.Image{}
+	ConcertsLocations         = []string{}
 	myApp                     fyne.App
 	myWindow                  fyne.Window
-	artists                   []core.Artist
+	artists                   []Artist
 	grid                      *fyne.Container
 	searchTerm                string
 	creationDateFromSelect    *widget.Select
@@ -35,19 +38,19 @@ var (
 	is_firstAlbumToSelect     = false
 	is_numMembersSelect       = false
 	is_concertLocationSelect  = false
-	artistsRef                []core.Artist
+	artistsRef                []Artist
 	filtersVisible            bool
-	filterContainer           *fyne.Container
+	FilterContainer           *fyne.Container
 )
 
-func setupSearchComponents() *widget.Entry {
+func SetupSearchComponents() *widget.Entry {
 	searchEntry := widget.NewEntry()
 	searchEntry.SetPlaceHolder("Rechercher un artiste")
 	// Use the OnChanged event to trigger the search on each keystroke
 	searchEntry.OnChanged = func(text string) {
 		fmt.Printf("%s", text)
 		if text != "" {
-			artists = core.SearchInAllStruct(text, artistsRef) // Use artistsRef to search across all artists
+			artists = SearchInAllStruct(text, artistsRef) // Use artistsRef to search across all artists
 		} else {
 			artists = artistsRef
 		}
@@ -57,7 +60,7 @@ func setupSearchComponents() *widget.Entry {
 	return searchEntry
 }
 
-func setupFilterComponents() {
+func SetupFilterComponents() {
 	// Generate year options for drop-down menus
 	yearOptions := generateYearOptions(1950, 2024)
 	//CREATE FILTERS :
@@ -85,7 +88,7 @@ func setupFilterComponents() {
 	})
 	numMembersSelect.PlaceHolder = "Nombre de membres"
 
-	concertLocationSelect = widget.NewSelect(concertsLocations, func(_ string) {
+	concertLocationSelect = widget.NewSelect(ConcertsLocations, func(_ string) {
 		is_concertLocationSelect = true
 	})
 
@@ -93,7 +96,7 @@ func setupFilterComponents() {
 		applyFilters()
 	})
 
-	filterContainer = container.NewVBox(
+	FilterContainer = container.NewVBox(
 		widget.NewLabel("Filtre par date de création :"),
 		container.NewHBox(widget.NewLabel("De "), creationDateFromSelect, widget.NewLabel(" à "), creationDateToSelect),
 		widget.NewLabel("Filtre par date du premier album :"),
@@ -106,7 +109,7 @@ func setupFilterComponents() {
 	)
 
 	// Hide filters by default
-	filterContainer.Hide()
+	FilterContainer.Hide()
 	filtersVisible = false
 }
 
@@ -128,16 +131,16 @@ func generateYearOptions(startYear, endYear int) []string {
 	return years
 }
 
-func toggleFiltersVisibility() {
+func ToggleFiltersVisibility() {
 	filtersVisible = !filtersVisible
 	if filtersVisible {
-		filterContainer.Show()
+		FilterContainer.Show()
 	} else {
-		filterContainer.Hide()
+		FilterContainer.Hide()
 	}
 	myWindow.Content().Refresh()
 }
-func setupGrid() {
+func SetupGrid() {
 
 	// Initialize or reset the grid with a defined number of columns
 	grid = container.NewGridWithColumns(5) // Vous pouvez ajuster le nombre de colonnes selon vos besoins
@@ -146,7 +149,7 @@ func setupGrid() {
 	updateGrid()
 }
 
-func setupGridContainer() *container.Scroll {
+func SetupGridContainer() *container.Scroll {
 	grid = container.NewGridWithColumns(5)
 	updateGrid()
 
@@ -166,17 +169,17 @@ func updateGrid() {
 	showArtistsGrid(filteredArtists)
 }
 
-func showArtistsGrid(artists []core.Artist) {
+func showArtistsGrid(artists []Artist) {
 	grid.Objects = nil
 	for _, artist := range artists {
 		currentArtist := artist // Create a local copy of the variable for capturing
-		image := preloaderImages[artist.Id]
+		image := PreloaderImages[artist.Id]
 		if image.Size().Width > 500 || image.Size().Height > 500 {
 			image.Resize(fyne.NewSize(500, 500))
 		}
 		imageContainer := container.New(layout.NewMaxLayout(), image)
 
-		button := widget.NewButton(currentArtist.Nom, func() {
+		button := widget.NewButton(currentArtist.Name, func() {
 			showArtistDetails(currentArtist) // Utiliser la copie locale dans la fermeture
 		})
 
@@ -188,7 +191,7 @@ func showArtistsGrid(artists []core.Artist) {
 	grid.Refresh()
 }
 
-func loadImageFromURL(urlStr string) *canvas.Image {
+func LoadImageFromURL(urlStr string) *canvas.Image {
 	resource, _ := fyne.LoadResourceFromURLString(urlStr)
 
 	image := canvas.NewImageFromResource(resource)
@@ -198,29 +201,29 @@ func loadImageFromURL(urlStr string) *canvas.Image {
 }
 
 func applyFilters() {
-	var filteredArtists []core.Artist = artistsRef // Start with all artists
+	var filteredArtists []Artist = artistsRef // Start with all artists
 	// Apply the filter by creation date if it is specified
 	creationDateFrom, creationDateTo := getNumberFromSelect(creationDateFromSelect, is_creationDateToSelect), getNumberFromSelect(creationDateToSelect, is_creationDateFromSelect)
 	if creationDateFrom != -1 || creationDateTo != -1 {
-		filteredArtists = core.FilterByCreationDate(filteredArtists, creationDateFrom, creationDateTo)
+		filteredArtists = FilterByCreationDate(filteredArtists, creationDateFrom, creationDateTo)
 	}
 
 	// Apply the filter by date of the first album if it is specified
 	firstAlbumFrom, firstAlbumTo := getNumberFromSelect(firstAlbumFromSelect, is_firstAlbumToSelect), getNumberFromSelect(firstAlbumToSelect, is_firstAlbumFromSelect)
 	if firstAlbumFrom != -1 || firstAlbumTo != -1 {
-		filteredArtists = core.FilterByFirstAlbumDate(filteredArtists, firstAlbumFrom, firstAlbumTo)
+		filteredArtists = FilterByFirstAlbumDate(filteredArtists, firstAlbumFrom, firstAlbumTo)
 	}
 
 	// Apply the filter by number of members if it is specified
 	numMembers := getNumberFromSelect(numMembersSelect, is_numMembersSelect)
 	if is_numMembersSelect {
-		filteredArtists = core.FilterByNumberOfMembers(filteredArtists, numMembers)
+		filteredArtists = FilterByNumberOfMembers(filteredArtists, numMembers)
 	}
 
 	// Apply the filter by concert venue if it is specified
 	if is_concertLocationSelect {
 		concertLocation := concertLocationSelect.Selected
-		filteredArtists = core.FilterByConcertLocation(filteredArtists, concertLocation)
+		filteredArtists = FilterByConcertLocation(filteredArtists, concertLocation)
 	}
 
 	// Update grid with filtered artists
@@ -240,10 +243,10 @@ func getNumberFromSelect(selectWidget *widget.Select, isSelected bool) int {
 	return year
 }
 
-func showArtistDetails(artist core.Artist) {
-	nameLabel := widget.NewLabelWithStyle(artist.Nom, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+func showArtistDetails(artist Artist) {
+	nameLabel := widget.NewLabelWithStyle(artist.Name, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 
-	image := preloaderImagesForPopup[artist.Id]
+	image := PreloaderImagesForPopup[artist.Id]
 	image.SetMinSize(fyne.NewSize(200, 200))
 
 	firstAlbumLabel := widget.NewLabel("First Album: " + artist.FirstAlbum)
@@ -271,8 +274,8 @@ func showArtistDetails(artist core.Artist) {
 
 		for _, concert := range artist.ConcertDates[start:end] {
 			concertIn := concert
-			concertsContainer.Add(widget.NewButton(fmt.Sprintf("- à %s le %d-%d-%d", strings.Split(concertIn.Location, "-")[0], concertIn.Date.Day, concertIn.Date.Month, concertIn.Date.Year), func() {
-				showMapPopup(strings.Split(concertIn.Location, "-")[0]) // Adapt this to your implementation
+			concertsContainer.Add(widget.NewButton(fmt.Sprintf("- à %s le %d-%d-%d", strings.Split(concertIn.Location.Locations[0], "-")[0], concertIn.Date.Day, concertIn.Date.Month, concertIn.Date.Year), func() {
+				showMapPopup(strings.Split(concertIn.Location.Locations[0], "-")[0]) // Adapt this to your implementation
 			}))
 		}
 
@@ -301,7 +304,7 @@ func showArtistDetails(artist core.Artist) {
 	}
 
 	spotifyButton := widget.NewButton("Écouter sur Spotify", func() {
-		searchQuery := strings.ReplaceAll(artist.Nom, " ", "%20")
+		searchQuery := strings.ReplaceAll(artist.Name, " ", "%20")
 		urlStr := "https://open.spotify.com/search/" + searchQuery
 		parsedUrl, _ := url.Parse(urlStr)
 		fyne.CurrentApp().OpenURL(parsedUrl)
@@ -320,7 +323,7 @@ func showArtistDetails(artist core.Artist) {
 }
 
 func showMapPopup(location string) {
-	backgroundImageRessource := core.GenerateMapImage(location)
+	backgroundImageRessource := GenerateMapImage(location)
 	backgroundImage := canvas.NewImageFromResource(backgroundImageRessource)
 	backgroundImage.FillMode = canvas.ImageFillStretch
 	content := container.NewMax(backgroundImage)

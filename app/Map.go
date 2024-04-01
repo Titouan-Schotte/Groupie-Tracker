@@ -1,19 +1,18 @@
-package Groupie_Tracker
+package app
 
 import (
 	"image/color"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
 
-func Map() {
-	a := app.New()
-	w := a.NewWindow("Groupie Tracker ᯓ★")
+func Map(a fyne.App) {
+	w := a.NewWindow("Groupie Tracker ★")
+	w.SetIcon(Logo)
 
 	// Créer un texte avec le contenu "Groupie Tracker"
 	text := canvas.NewText("Groupie Tracker", color.White)
@@ -29,7 +28,12 @@ func Map() {
 
 	// Crée une barre de navigation avec des onglets
 	navBar := container.NewHBox(
+		widget.NewButton("Mes favoris", func() {
+			// Gérer l'onglet Accueil clic
+		}),
 		widget.NewButton("Accueil", func() {
+			Accueil(a)
+			w.Hide()
 			// Gérer l'onglet Accueil clic
 		}),
 		widget.NewButton("Artiste", func() {
@@ -64,6 +68,10 @@ func Map() {
 
 	w.SetContent(backgroundContainer)
 	w.Resize(fyne.NewSize(900, 500))
-	w.ShowAndRun()
+	w.Show()
+	w.CenterOnScreen()
+	w.SetOnClosed(func() {
+		a.Quit()
+	})
 
 }

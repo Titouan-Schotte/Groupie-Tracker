@@ -3,7 +3,7 @@ package core
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -123,7 +123,7 @@ func Api_location() {
 
 // newFunction is a helper function to read response body from HTTP request.
 func newFunction(res *http.Response) []byte {
-	body, _ := ioutil.ReadAll(res.Body)
+	body, _ := io.ReadAll(res.Body)
 
 	return body
 }
