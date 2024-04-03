@@ -1,18 +1,20 @@
 /*
-Titouan Schotté
+Titouan SchottÃ©
 Main core launch pages
 */
 package main
 
 import (
 	"Groupie_Tracker/core"
+	"image/color"
+	"slices"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
-	"image/color"
-	"slices"
 )
 
 var preloaderImages = map[int]*canvas.Image{}
@@ -20,6 +22,9 @@ var preloaderImagesForPopup = map[int]*canvas.Image{}
 var concertsLocations = []string{}
 
 func main() {
+	//Load the favorite datas
+	core.LoadJson()
+
 	//Get Artists by api
 	artistsRef = core.Api_artists()
 
@@ -80,11 +85,19 @@ func showMainPage(app fyne.App, window fyne.Window) {
 		toggleFiltersVisibility()
 	})
 
+	// ===================JAI AJOUTER CE BOUTON==================
+
+	//Button to go to the favorite page
+	favoriteButton := widget.NewButton("Afficher les favoris", func() {
+		FavorisPage(app, window)
+	})
+	// ===========================================================
+
 	// Configuring the artist grid
 	setupGrid()
 
 	// Main layout
-	topContainer := container.NewVBox(searchEntry, toggleFiltersButton, filterContainer)
+	topContainer := container.NewVBox(favoriteButton, searchEntry, toggleFiltersButton, filterContainer)
 	mainContainer := container.NewBorder(topContainer, nil, nil, nil, setupGridContainer())
 
 	myWindow.SetContent(mainContainer)
@@ -93,3 +106,49 @@ func showMainPage(app fyne.App, window fyne.Window) {
 
 	window.Close()
 }
+
+// ===================JAI AJOUTER CETTE PAGE==================
+
+func FavorisPage(app fyne.App, window fyne.Window) {
+	myWindow := app.NewWindow("Groupie Tracker")
+	myWindow.CenterOnScreen()
+
+	homeButton := widget.NewButton("Accueil", func() {
+		//showMainPage(app, window)
+		myWindow.Hide()
+	})
+
+	grid := container.NewGridWithColumns(5)
+
+	favArtist := core.GetFavorite()
+
+	for _, artist := range favArtist {
+		currentArtist := artist // Create a local copy of the variable for capturing
+		image := preloaderImages[artist.Id]
+		if image.Size().Width > 500 || image.Size().Height > 500 {
+			image.Resize(fyne.NewSize(500, 500))
+		}
+
+		imageContainer := container.New(layout.NewMaxLayout(), image)
+
+		button := widget.NewButton(currentArtist.Nom, func() {
+			showArtistDetails(currentArtist) // Utiliser la copie locale dans la fermeture
+		})
+
+		imageWithButton := container.New(layout.NewVBoxLayout(), imageContainer, button)
+
+		grid.Add(imageWithButton)
+	}
+
+	scrollContainer := container.NewVScroll(grid)
+
+	mainContainer := container.NewBorder(homeButton, nil, nil, nil, scrollContainer)
+
+	myWindow.SetContent(mainContainer)
+	myWindow.Resize(fyne.NewSize(1600, 1000))
+	myWindow.Show()
+
+	window.Close()
+}
+
+// ===========================================================

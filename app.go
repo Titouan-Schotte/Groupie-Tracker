@@ -7,14 +7,15 @@ package main
 import (
 	"Groupie_Tracker/core"
 	"fmt"
+	"net/url"
+	"strconv"
+	"strings"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
-	"net/url"
-	"strconv"
-	"strings"
 )
 
 var (
@@ -174,6 +175,7 @@ func showArtistsGrid(artists []core.Artist) {
 		if image.Size().Width > 500 || image.Size().Height > 500 {
 			image.Resize(fyne.NewSize(500, 500))
 		}
+
 		imageContainer := container.New(layout.NewMaxLayout(), image)
 
 		button := widget.NewButton(currentArtist.Nom, func() {
@@ -241,8 +243,26 @@ func getNumberFromSelect(selectWidget *widget.Select, isSelected bool) int {
 }
 
 func showArtistDetails(artist core.Artist) {
-	nameLabel := widget.NewLabelWithStyle(artist.Nom, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 
+	var favoriteButton *widget.Button // JAI AJOUTER CA
+	var popUp *widget.PopUp
+
+	nameLabel := widget.NewLabelWithStyle(artist.Nom, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	if core.InFavorite(artist) {
+		txt := "Supprimer des favoris"
+		favoriteButton = widget.NewButton(txt, func() {
+			core.RemoveFavorite(artist)
+			popUp.Hide()
+			showArtistDetails(artist)
+		})
+	} else {
+		txt := "Ajouter aux favoris"
+		favoriteButton = widget.NewButton(txt, func() {
+			core.AddFavorite(artist)
+			popUp.Hide()
+			showArtistDetails(artist)
+		})
+	}
 	image := preloaderImagesForPopup[artist.Id]
 	image.SetMinSize(fyne.NewSize(200, 200))
 
@@ -253,9 +273,10 @@ func showArtistDetails(artist core.Artist) {
 	for _, member := range artist.Members {
 		detailsContainer.Add(widget.NewLabel(" - " + member))
 	}
-
+	imageContainer := container.NewVBox(image, favoriteButton)
+	// AJOUTER CA AUSSI
 	concertsContainer := container.NewVBox(widget.NewLabel("Concerts :"))
-	content := container.NewHBox(detailsContainer, image, concertsContainer) // Contenu à mettre à jour avec les concerts
+	content := container.NewHBox(detailsContainer, imageContainer, concertsContainer) // Contenu à mettre à jour avec les concerts
 
 	// Pagination
 	currentPage := 0
@@ -310,13 +331,14 @@ func showArtistDetails(artist core.Artist) {
 	contentWithHeaderAndFooter := container.NewVBox(fullContent, spotifyButton)
 
 	// Creation and display of the popup
-	popUp := widget.NewPopUp(contentWithHeaderAndFooter, myWindow.Canvas())
+	popUp = widget.NewPopUp(contentWithHeaderAndFooter, myWindow.Canvas())
 	popUp.Show()
 	popUp.Resize(fyne.NewSize(600, 400))
 	popUp.Move(fyne.NewPos(myWindow.Canvas().Size().Width/2-300, myWindow.Canvas().Size().Height/2-200))
 
 	// Display the first page of concerts
 	updateConcertsPage(0)
+
 }
 
 func showMapPopup(location string) {
