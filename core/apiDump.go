@@ -13,6 +13,7 @@ import (
 	"strings"
 )
 
+// Artist represents an artist with their details.
 type Artist struct {
 	Id           int       `json:"id"`
 	Image        string    `json:"image"`
@@ -25,16 +26,13 @@ type Artist struct {
 	Relations    string    `json:"relations"`
 }
 
-type Member struct {
-	Surname string `json:"surname"`
-	Name    string `json:"name"`
-}
-
+// Concert represents a concert with its date and location.
 type Concert struct {
 	Date     Date   `json:"dates"`
 	Location string `json:"locations"`
 }
 
+// APIResponseLocation represents the response structure for location data from the API.
 type APIResponseLocation struct {
 	Locations []string `json:"locations"`
 }
@@ -45,13 +43,7 @@ type Date struct {
 	Year  int `json:"year"`
 }
 
-type API struct {
-}
-
-type APIResponseDates struct {
-	Dates []string `json:"dates"`
-}
-
+// UnmarshalJSON is a custom unmarshal function for Date type to handle special cases.
 func (d *Date) UnmarshalJSON(data []byte) {
 	var dateStr string
 	json.Unmarshal(data, &dateStr)
@@ -77,6 +69,7 @@ type RelationConcert struct {
 	DatesLocations map[string][]string `json:"datesLocations"`
 }
 
+// Api_artists retrieves artists' data from the API and shows it.
 func Api_artists() []Artist {
 	var response []Artist
 
@@ -119,6 +112,7 @@ func Api_artists() []Artist {
 	return response
 }
 
+// Api_dates retrieves dates data from the API and shows it.
 func Api_dates() {
 	var response4 map[string][]struct {
 		Id    int      `json:"id"`
@@ -142,6 +136,7 @@ func Api_dates() {
 	}
 }
 
+// Api_location retrieves location data from the API and shows it.
 func Api_location() {
 	var response2 APIResponseLocation
 
@@ -157,6 +152,7 @@ func Api_location() {
 	}
 }
 
+// newFunction is a helper function to read response body from HTTP request.
 func newFunction(res *http.Response) []byte {
 	body, _ := ioutil.ReadAll(res.Body)
 
