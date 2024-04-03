@@ -6,7 +6,6 @@ package core
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -83,7 +82,6 @@ func Api_artists() []Artist {
 	for i, p := range response {
 		var responseRel RelationConcert
 
-		fmt.Printf("Artist %d: %s\n", i+1, p.Relations)
 		resRel, _ := http.Get(p.Relations)
 
 		defer resRel.Body.Close()
@@ -93,7 +91,6 @@ func Api_artists() []Artist {
 
 		for location, dates := range responseRel.DatesLocations {
 			for _, date := range dates { // Itérer sur chaque date dans la slice
-				fmt.Printf("%s %s", location, date)
 				dateSplit := strings.Split(date, "-")
 				if len(dateSplit) == 3 { // Vérifiez que la date est bien formée
 					dayIn, _ := strconv.Atoi(dateSplit[0])
@@ -126,12 +123,11 @@ func Api_dates() {
 	body := newFunction(res)
 	json.Unmarshal(body, &response4)
 
-	for i, item := range response4["index"] {
+	for _, item := range response4["index"] {
 		for _, dateStr := range item.Dates {
 			var date Date
 			json.Unmarshal([]byte("\""+dateStr+"\""), &date)
 
-			fmt.Printf("Date %d: ID: %d, Day: %d, Month: %d, Year: %d\n", i+1, item.Id, date.Day, date.Month, date.Year)
 		}
 	}
 }
@@ -147,9 +143,6 @@ func Api_location() {
 	body := newFunction(res)
 	json.Unmarshal(body, &response2)
 
-	for i, location := range response2.Locations {
-		fmt.Printf("Location %d: %s\n", i+1, location)
-	}
 }
 
 // newFunction is a helper function to read response body from HTTP request.

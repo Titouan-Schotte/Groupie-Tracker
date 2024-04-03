@@ -6,6 +6,7 @@ package main
 
 import (
 	"Groupie_Tracker/core"
+	"fmt"
 	"image/color"
 	"slices"
 
@@ -23,6 +24,7 @@ var preloaderImagesForPopupExtra = map[int]*canvas.Image{}
 var concertsLocations = []string{}
 
 func main() {
+	fmt.Println("Loading please wait : downloading images")
 	//Load the favorite datas
 	core.LoadJson()
 
@@ -41,7 +43,7 @@ func main() {
 		}
 	}
 	artists = artistsRef
-
+	fmt.Println("Launching Fyne...")
 	//Create new app
 	myApp := app.New()
 	showHomePage(myApp)
