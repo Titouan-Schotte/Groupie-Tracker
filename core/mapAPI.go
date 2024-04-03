@@ -11,7 +11,7 @@ import (
 )
 
 func mapImage(lat, long float64) string {
-	// Clé d'API Bing Maps
+	// KEy for the Bing Maps API
 	apiKey := "98dHC1zw62rCO5MgbyLo~-RXs8b5NOfEDf1Ed_fpG5w~ApA31rcfZ3Il_YTnP5E7_VKZQYxqvk8eO5R2e5hzfQuR9jXpwfU_X5Y0wSv-K-iD"
 
 	const bingMapsStaticURL = "https://dev.virtualearth.net/REST/v1/Imagery/Map/Road"
@@ -19,7 +19,7 @@ func mapImage(lat, long float64) string {
 		bingMapsStaticURL, lat, long, lat, long, apiKey)
 }
 
-type Location struct {
+type Location struct { // Structur for the location
 	Name      string  `json:"name"`
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
@@ -57,15 +57,15 @@ func getCoordinates(city string) (float64, float64) {
 }
 
 func GenerateMapImage(city string) fyne.Resource {
-	// obtient les coordonnées de la ville
+	// get the coordinates of the city
 	latitude, longitude := getCoordinates(city)
 	fmt.Println(latitude, longitude)
 	imageURL := mapImage(latitude, longitude)
-	// appel de la fonction pour obtenir l'image
+	// call the mapImage function to get the image URL
 	fmt.Println(imageURL)
 	resource, _ := fyne.LoadResourceFromURLString(imageURL)
 
-	// création de l'image
+	// create a new image from the resource
 	image := canvas.NewImageFromResource(resource)
 	image.FillMode = canvas.ImageFillContain
 	image.SetMinSize(fyne.NewSize(200, 200)) // Ajuster la taille de l'image
