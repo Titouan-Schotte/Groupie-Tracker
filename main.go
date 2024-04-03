@@ -19,6 +19,7 @@ import (
 
 var preloaderImages = map[int]*canvas.Image{}
 var preloaderImagesForPopup = map[int]*canvas.Image{}
+var preloaderImagesForPopupExtra = map[int]*canvas.Image{}
 var concertsLocations = []string{}
 
 func main() {
@@ -32,6 +33,7 @@ func main() {
 	for _, artist := range artists {
 		preloaderImages[artist.Id] = loadImageFromURL(artist.Image)
 		preloaderImagesForPopup[artist.Id] = loadImageFromURL(artist.Image)
+		preloaderImagesForPopupExtra[artist.Id] = loadImageFromURL(artist.Image)
 		for _, concert := range artist.ConcertDates {
 			if !slices.Contains(concertsLocations, concert.Location) {
 				concertsLocations = append(concertsLocations, concert.Location)
@@ -124,7 +126,7 @@ func FavorisPage(app fyne.App, window fyne.Window) {
 
 	for _, artist := range favArtist {
 		currentArtist := artist // Create a local copy of the variable for capturing
-		image := preloaderImages[artist.Id]
+		image := preloaderImagesForPopupExtra[artist.Id]
 		if image.Size().Width > 500 || image.Size().Height > 500 {
 			image.Resize(fyne.NewSize(500, 500))
 		}
